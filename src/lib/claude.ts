@@ -1,12 +1,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { z } from "zod";
+import { env } from "@/lib/env";
 
 export const MODEL = "claude-opus-5-5";
 
 let client: Anthropic | undefined;
 function anthropic() {
-  client ??= new Anthropic();
+  client ??= new Anthropic({ apiKey: env.anthropicApiKey() });
   return client;
 }
 

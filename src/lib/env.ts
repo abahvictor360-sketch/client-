@@ -3,7 +3,8 @@
 
 function required(name: string): string {
   const value = process.env[name];
-  if (!value) throw new Error(`Missing environment variable ${name}`);
+  // "REPLACE_ME" is the placeholder created in Vercel until the real value is pasted in.
+  if (!value || value === "REPLACE_ME") throw new Error(`Missing environment variable ${name}`);
   return value;
 }
 
@@ -13,6 +14,7 @@ export const env = {
   supabaseUrl: () => required("NEXT_PUBLIC_SUPABASE_URL"),
   supabaseAnonKey: () => required("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
   supabaseServiceKey: () => required("SUPABASE_SERVICE_ROLE_KEY"),
+  anthropicApiKey: () => required("ANTHROPIC_API_KEY"),
   apolloApiKey: () => required("APOLLO_API_KEY"),
   resendApiKey: () => required("RESEND_API_KEY"),
   resendWebhookSecret: () => required("RESEND_WEBHOOK_SECRET"),
