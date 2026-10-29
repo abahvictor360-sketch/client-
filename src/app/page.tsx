@@ -1,6 +1,6 @@
 import { ChevronRight, Inbox, PauseCircle, ShieldCheck, Sparkles, Wallet } from "lucide-react";
-import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { HeroStart } from "@/components/hero-start";
 import { SiteHeader } from "@/components/site-header";
 import { WebsiteForm } from "@/components/website-form";
 import { formatUsd, PRICE_PER_EMAIL_CENTS, SIGNUP_CREDITS_CENTS } from "@/lib/pricing";
@@ -130,12 +130,9 @@ export default function Home() {
               Paste your website. It finds your buyers, writes each one a personal email, answers the replies and books
               meetings on your calendar.
             </p>
-            <div className="rise mt-8 flex flex-wrap justify-center gap-3 [animation-delay:240ms]">
-              <Link href="/signup" className="btn-primary">
-                <Sparkles size={16} aria-hidden="true" />
-                Start free with {formatUsd(SIGNUP_CREDITS_CENTS)}
-              </Link>
-              <a href="#how" className="btn-secondary">See how it works</a>
+            <div className="rise [animation-delay:240ms]">
+              <HeroStart />
+              <p className="hint">Includes {formatUsd(SIGNUP_CREDITS_CENTS)} of free credits. No card needed.</p>
             </div>
 
             <div className="mx-auto mt-16 grid max-w-5xl gap-5 text-left sm:grid-cols-3 sm:gap-6">

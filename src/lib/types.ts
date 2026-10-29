@@ -29,7 +29,8 @@ export interface Competitor {
 export interface Business {
   id: string;
   user_id: string;
-  website: string;
+  website: string | null;
+  description: string | null;
   name: string | null;
   summary: string | null;
   offer: string | null;

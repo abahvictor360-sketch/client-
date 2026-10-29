@@ -25,15 +25,21 @@ async function ownedBusiness(id: string) {
 
 export async function createBusiness(_: unknown, form: FormData) {
   const { supabase, user } = await session();
-  let website: URL;
-  try {
-    website = normalizeWebsite(String(form.get("website") ?? ""));
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "Invalid website" };
+  const about = String(form.get("about") ?? "").trim();
+  let website: string | null = null;
+  if (about) {
+    if (about.length < 15) return { error: "Describe what you sell in at least a full sentence." };
+    if (about.length > 500) return { error: "Keep the description under 500 characters." };
+  } else {
+    try {
+      website = normalizeWebsite(String(form.get("website") ?? "")).href;
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : "Invalid website" };
+    }
   }
   const { data, error } = await supabase
     .from("businesses")
-    .insert({ user_id: user.id, website: website.href })
+    .insert({ user_id: user.id, website, description: about || null })
     .select("id")
     .single();
   if (error || !data) return { error: error?.message ?? "Could not create campaign" };

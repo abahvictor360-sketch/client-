@@ -21,7 +21,12 @@ export async function signIn(_: unknown, form: FormData) {
 
 export async function signUp(_: unknown, form: FormData) {
   const website = String(form.get("website") ?? "").trim();
-  const next = website ? `/app?website=${encodeURIComponent(website)}` : "/app";
+  const about = String(form.get("about") ?? "").trim().slice(0, 500);
+  const next = website
+    ? `/app?website=${encodeURIComponent(website)}`
+    : about
+      ? `/app?about=${encodeURIComponent(about)}`
+      : "/app";
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: String(form.get("email")),

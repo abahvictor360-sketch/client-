@@ -54,13 +54,16 @@ export async function analyzeBusiness(businessId: string) {
   if (error || !business) throw new Error(`Business ${businessId} not found`);
 
   try {
-    const siteText = await readWebsite(new URL(business.website));
+    // Businesses without a website are analyzed from the owner's own description.
+    const source = business.website
+      ? `Website: ${business.website}\n\n<website_text>\n${await readWebsite(new URL(business.website))}\n</website_text>`
+      : `The business has no website. The owner describes it as:\n<owner_description>\n${business.description}\n</owner_description>`;
     const analysis = await generateObject({
       schema: AnalysisSchema,
       system: SYSTEM,
       effort: "high",
       webSearch: { maxUses: 6 },
-      prompt: `Website: ${business.website}\n\n<website_text>\n${siteText}\n</website_text>`,
+      prompt: source,
     });
 
     await db

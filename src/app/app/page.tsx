@@ -7,8 +7,8 @@ import { NewCampaignForm } from "./new-campaign-form";
 export const maxDuration = 300;
 export const metadata = { title: "Campaigns" };
 
-export default async function CampaignsPage({ searchParams }: { searchParams: Promise<{ website?: string }> }) {
-  const { website } = await searchParams;
+export default async function CampaignsPage({ searchParams }: { searchParams: Promise<{ website?: string; about?: string }> }) {
+  const { website, about } = await searchParams;
   const { supabase } = await requireUser();
   const { data: businesses } = await supabase
     .from("businesses")
@@ -22,10 +22,10 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
       <section className="max-w-2xl">
         <h1 className="text-3xl sm:text-4xl">{hasCampaigns ? "Campaigns" : "What are you selling?"}</h1>
         <p className="mt-2 text-muted">
-          Paste a website. The agent reads it, studies the competition and proposes who to sell to.
+          Paste a website, or describe what you sell. The agent studies it and the competition, then proposes who to sell to.
         </p>
         <div className="mt-6">
-          <NewCampaignForm website={website} />
+          <NewCampaignForm website={website} about={about} />
         </div>
       </section>
 
@@ -40,8 +40,8 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
                   className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-surface-2"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-semibold">{b.name ?? new URL(b.website).hostname}</p>
-                    <p className="truncate text-sm text-muted">{b.summary ?? new URL(b.website).hostname}</p>
+                    <p className="truncate font-semibold">{b.name ?? (b.website ? new URL(b.website).hostname : "Untitled business")}</p>
+                    <p className="truncate text-sm text-muted">{b.summary ?? (b.website ? new URL(b.website).hostname : b.description)}</p>
                   </div>
                   <StatusPill status={b.status} />
                 </Link>

@@ -65,7 +65,7 @@ export default async function BusinessPage({
     { sent: 0, replies: 0, positive: 0, meetings: 0, spend: 0 },
   );
   const segmentName = new Map((segments ?? []).map((s) => [s.id, s.name]));
-  const host = new URL(business.website).hostname;
+  const host = business.website ? new URL(business.website).hostname : null;
 
   const stats = [
     { label: "Emails sent", value: totals.sent.toLocaleString("en-US") },
@@ -87,12 +87,16 @@ export default async function BusinessPage({
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl sm:text-4xl">{business.name ?? host}</h1>
+              <h1 className="text-3xl sm:text-4xl">{business.name ?? host ?? "Your business"}</h1>
               <StatusPill status={business.status} />
             </div>
-            <a href={business.website} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm text-muted underline underline-offset-4" translate="no">
-              {host}
-            </a>
+            {business.website ? (
+              <a href={business.website} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm text-muted underline underline-offset-4" translate="no">
+                {host}
+              </a>
+            ) : (
+              <p className="mt-1 max-w-xl text-sm text-muted">{business.description}</p>
+            )}
           </div>
           <RunControls id={business.id} status={business.status} />
         </div>
@@ -102,7 +106,7 @@ export default async function BusinessPage({
         <div role="status" className="panel flex items-start gap-4 p-6">
           <span className="mt-1.5 h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-dawn motion-reduce:animate-none" aria-hidden="true" />
           <div>
-            <p className="font-semibold">Reading {host} and researching competitors…</p>
+            <p className="font-semibold">{host ? `Reading ${host} and researching competitors…` : "Studying your description and researching competitors…"}</p>
             <p className="mt-1 text-sm text-muted">This usually takes one to two minutes. The page updates by itself.</p>
           </div>
         </div>
@@ -111,7 +115,7 @@ export default async function BusinessPage({
         <div role="alert" className="panel border-danger/40 p-6">
           <p className="font-semibold text-danger">The analysis didn&apos;t finish</p>
           <p className="mt-1 text-sm text-muted">{business.error}</p>
-          <p className="mt-2 text-sm">Check that the website loads in a browser, then choose Analyze again.</p>
+          <p className="mt-2 text-sm">{host ? "Check that the website loads in a browser, then choose Analyze again." : "Try Analyze again. If it keeps failing, start a new campaign with a fuller description."}</p>
         </div>
       )}
       {business.status === "ready" && (

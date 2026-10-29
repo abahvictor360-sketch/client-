@@ -10,11 +10,13 @@ export function AuthForm({
   mode,
   action,
   website,
+  about,
   next,
 }: {
   mode: "login" | "signup";
   action: (state: State, form: FormData) => Promise<State>;
   website?: string;
+  about?: string;
   next?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
@@ -29,11 +31,14 @@ export function AuthForm({
           <p className="mt-2 text-muted">
             Next, the agent starts reading <span className="font-semibold text-ink" translate="no">{website}</span>.
           </p>
+        ) : about ? (
+          <p className="mt-2 text-muted">Next, the agent works out who buys what you described.</p>
         ) : (
           <p className="mt-2 text-muted">{signup ? "It takes about a minute." : "Sign in to check on your agent."}</p>
         )}
       </div>
       <input type="hidden" name="website" value={website ?? ""} />
+      <input type="hidden" name="about" value={about ?? ""} />
       <input type="hidden" name="next" value={next ?? ""} />
       <div>
         <label className="label" htmlFor="email">Work email</label>
