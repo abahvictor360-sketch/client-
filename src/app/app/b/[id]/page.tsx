@@ -66,6 +66,9 @@ export default async function BusinessPage({
   );
   const segmentName = new Map((segments ?? []).map((s) => [s.id, s.name]));
   const host = business.website ? new URL(business.website).hostname : null;
+  // An analysis still "running" after 6 minutes was cut off; let the user retry it.
+  const analysisStalled =
+    business.status === "analyzing" && Date.now() - new Date(business.analysis_started_at).getTime() > 6 * 60_000;
 
   const stats = [
     { label: "Emails sent", value: totals.sent.toLocaleString("en-US") },
@@ -77,7 +80,7 @@ export default async function BusinessPage({
 
   return (
     <div className="space-y-8">
-      <AutoRefresh active={business.status === "analyzing"} />
+      <AutoRefresh active={business.status === "analyzing" && !analysisStalled} />
 
       <div>
         <Link href="/app" className="btn-quiet -ml-3">
@@ -98,11 +101,17 @@ export default async function BusinessPage({
               <p className="mt-1 max-w-xl text-sm text-muted">{business.description}</p>
             )}
           </div>
-          <RunControls id={business.id} status={business.status} />
+          <RunControls id={business.id} status={analysisStalled ? "failed" : business.status} />
         </div>
       </div>
 
-      {business.status === "analyzing" && (
+      {analysisStalled && (
+        <div role="alert" className="panel p-6">
+          <p className="font-semibold text-danger">The analysis took too long and stopped</p>
+          <p className="mt-1 text-sm text-muted">Choose Analyze again to retry. It usually finishes in one to two minutes.</p>
+        </div>
+      )}
+      {business.status === "analyzing" && !analysisStalled && (
         <div role="status" className="panel flex items-start gap-4 p-6">
           <span className="mt-1.5 h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-dawn motion-reduce:animate-none" aria-hidden="true" />
           <div>

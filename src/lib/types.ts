@@ -41,6 +41,7 @@ export interface Business {
   error: string | null;
   daily_budget_cents: number;
   max_emails_per_day: number;
+  analysis_started_at: string;
   created_at: string;
 }
 

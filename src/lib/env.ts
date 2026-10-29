@@ -26,3 +26,13 @@ export const env = {
   stripeSecretKey: () => process.env.STRIPE_SECRET_KEY,
   stripeWebhookSecret: () => required("STRIPE_WEBHOOK_SECRET"),
 };
+
+function isSet(name: string) {
+  const value = process.env[name];
+  return Boolean(value) && value !== "REPLACE_ME";
+}
+
+/** Server settings the website analysis needs; empty when it can run. */
+export function missingAnalysisConfig(): string[] {
+  return ["SUPABASE_SERVICE_ROLE_KEY", "ANTHROPIC_API_KEY"].filter((name) => !isSet(name));
+}

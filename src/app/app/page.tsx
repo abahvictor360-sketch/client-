@@ -25,7 +25,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
           Paste a website, or describe what you sell. The agent studies it and the competition, then proposes who to sell to.
         </p>
         <div className="mt-6">
-          <NewCampaignForm website={website} about={about} />
+          <NewCampaignForm website={website} about={about} autoStart={Boolean(website || about) && !hasCampaigns} />
         </div>
       </section>
 

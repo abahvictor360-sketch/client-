@@ -1,16 +1,32 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { createBusiness } from "./actions";
 
-export function NewCampaignForm({ website, about }: { website?: string; about?: string }) {
+export function NewCampaignForm({
+  website,
+  about,
+  autoStart = false,
+}: {
+  website?: string;
+  about?: string;
+  /** Submit right away: the visitor already entered this on the landing page. */
+  autoStart?: boolean;
+}) {
   const [state, action, pending] = useActionState(createBusiness, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+  const started = useRef(false);
+  useEffect(() => {
+    if (!autoStart || started.current) return;
+    started.current = true;
+    formRef.current?.requestSubmit();
+  }, [autoStart]);
   const [noWebsite, setNoWebsite] = useState(Boolean(about) && !website);
   const errorId = "campaign-error";
   const hintId = "campaign-hint";
 
   return (
-    <form action={action}>
+    <form ref={formRef} action={action}>
       <div className="flex items-end justify-between gap-3">
         <label htmlFor="campaign-source" className="label">
           {noWebsite ? "What you sell" : "Website to sell"}

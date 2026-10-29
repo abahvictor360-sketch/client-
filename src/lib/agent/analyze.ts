@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { generateObject } from "@/lib/claude";
 import { adminClient } from "@/lib/supabase/admin";
@@ -58,13 +59,17 @@ export async function analyzeBusiness(businessId: string) {
     const source = business.website
       ? `Website: ${business.website}\n\n<website_text>\n${await readWebsite(new URL(business.website))}\n</website_text>`
       : `The business has no website. The owner describes it as:\n<owner_description>\n${business.description}\n</owner_description>`;
-    const analysis = await generateObject({
-      schema: AnalysisSchema,
-      system: SYSTEM,
-      effort: "high",
-      webSearch: { maxUses: 6 },
-      prompt: source,
-    });
+    const request = { schema: AnalysisSchema, system: SYSTEM, effort: "high" as const, prompt: source };
+    let analysis;
+    try {
+      analysis = await generateObject({ ...request, webSearch: { maxUses: 6 } });
+    } catch (err) {
+      // Web search must be enabled for the Anthropic organization; without it,
+      // analyze from the website alone rather than failing the whole step.
+      if (!(err instanceof Anthropic.BadRequestError)) throw err;
+      console.warn("Analysis with web search failed; retrying without it", err.message);
+      analysis = await generateObject(request);
+    }
 
     await db
       .from("businesses")

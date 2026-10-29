@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { analyzeBusiness } from "@/lib/agent/analyze";
 import { missingSenderFields } from "@/lib/email";
+import { missingAnalysisConfig } from "@/lib/env";
 import { trialStatus } from "@/lib/pricing";
 import { requireUser } from "@/lib/supabase/server";
 import type { Account } from "@/lib/types";
@@ -24,8 +25,17 @@ async function ownedBusiness(id: string) {
   return { supabase, user, business: data };
 }
 
+function configError() {
+  const missing = missingAnalysisConfig();
+  return missing.length
+    ? `The agent isn't set up yet: ${missing.join(" and ")} must be set on the server. Please try again later.`
+    : null;
+}
+
 export async function createBusiness(_: unknown, form: FormData) {
   const { supabase, user } = await session();
+  const notReady = configError();
+  if (notReady) return { error: notReady };
   const about = String(form.get("about") ?? "").trim();
   let website: string | null = null;
   if (about) {
@@ -51,7 +61,11 @@ export async function createBusiness(_: unknown, form: FormData) {
 
 export async function reanalyzeBusiness(id: string) {
   const { supabase } = await ownedBusiness(id);
-  await supabase.from("businesses").update({ status: "analyzing", error: null }).eq("id", id);
+  if (configError()) return;
+  await supabase
+    .from("businesses")
+    .update({ status: "analyzing", error: null, analysis_started_at: new Date().toISOString() })
+    .eq("id", id);
   after(() => analyzeBusiness(id).catch((err) => console.error("Analysis failed", err)));
   revalidatePath(`/app/b/${id}`);
 }
