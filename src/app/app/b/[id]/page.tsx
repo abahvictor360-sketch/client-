@@ -5,8 +5,8 @@ import { StatusPill } from "@/components/status-pill";
 import { formatUsd } from "@/lib/pricing";
 import { requireUser } from "@/lib/supabase/server";
 import type { Business, Meeting, Message, Prospect, Segment } from "@/lib/types";
-import { setSegmentStatus } from "../../actions";
-import { AutoRefresh, RunControls } from "./controls";
+import { setSegmentStatus, stopProspect } from "../../actions";
+import { AutoRefresh, DeleteCampaignButton, RunControls, StopProspectButton } from "./controls";
 import { LimitsForm } from "./limits-form";
 
 export const maxDuration = 300;
@@ -127,6 +127,11 @@ export default async function BusinessPage({
           <p className="mt-2 text-sm">{host ? "Check that the website loads in a browser, then choose Analyze again." : "Try Analyze again. If it keeps failing, start a new campaign with a fuller description."}</p>
         </div>
       )}
+      {business.status === "running" && (
+        <p className="text-sm text-muted">
+          The agent sends on weekdays between 8:00 and 18:00 in the timezone set in Settings, spread through the day.
+        </p>
+      )}
       {business.status === "ready" && (
         <div className="rounded-[var(--radius-panel)] bg-dawn-soft p-5 text-sm text-dawn-ink">
           Review the buyer types below and pause any you don&apos;t want. When it looks right, choose Start agent.
@@ -237,6 +242,7 @@ export default async function BusinessPage({
               <h2 className="text-lg">Spending limits</h2>
               <LimitsForm id={id} dailyBudgetCents={business.daily_budget_cents} maxPerDay={business.max_emails_per_day} />
             </section>
+            <DeleteCampaignButton id={id} name={business.name ?? host ?? "this campaign"} />
           </aside>
         </div>
       )}
@@ -319,6 +325,7 @@ async function InboxTab({ businessId, selected }: { businessId: string; selected
   }
   const list = [...conversations.values()].sort((a, b) => Number(b.hasReply) - Number(a.hasReply));
   const activeId = selected ?? list.find((c) => c.hasReply)?.prospect_id ?? list[0]?.prospect_id;
+  const activeStatus = list.find((c) => c.prospect_id === activeId)?.prospects?.status;
 
   const { data: thread } = activeId
     ? await supabase
@@ -361,6 +368,12 @@ async function InboxTab({ businessId, selected }: { businessId: string; selected
         </ul>
       </nav>
       <section aria-label="Conversation" className="panel space-y-4 p-4 sm:p-6">
+        {activeId && activeStatus && ["new", "contacted", "replied", "interested"].includes(activeStatus) && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+            <p className="text-sm text-muted">Want to take this one over yourself?</p>
+            <StopProspectButton onStop={stopProspect.bind(null, businessId, activeId)} />
+          </div>
+        )}
         {(thread ?? []).map((m) => (
           <article
             key={m.id}

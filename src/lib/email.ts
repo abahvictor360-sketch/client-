@@ -105,27 +105,3 @@ export async function notifyOwner(account: Account, ownerEmail: string, subject:
     text: body,
   });
 }
-
-/**
- * Checks that the sender address is on a domain verified in Resend.
- * Returns a user-facing problem, or null when it can send (or Resend can't be
- * reached to check, in which case sending will surface any error later).
- */
-export async function senderDomainProblem(senderEmail: string): Promise<string | null> {
-  const domain = senderEmail.split("@").pop()?.toLowerCase();
-  if (!domain) return "Enter a full sending address, like alex@go.acme.com.";
-  try {
-    const { data, error } = await resendClient().domains.list();
-    if (error || !data) return null;
-    const match = data.data.find((d) => d.name.toLowerCase() === domain);
-    if (!match) {
-      return `${domain} isn't added in Resend yet. Add and verify it under Resend → Domains, then save again.`;
-    }
-    if (match.status !== "verified") {
-      return `${domain} is added in Resend but not verified yet (status: ${match.status.replace(/_/g, " ")}). Finish the DNS setup, then save again.`;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}

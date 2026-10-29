@@ -2,6 +2,7 @@ import { z } from "zod";
 import { charge, refund } from "@/lib/agent/billing";
 import { availableSlots, formatSlot, meetingInvite } from "@/lib/calendar";
 import { generateObject } from "@/lib/claude";
+import { senderProblem } from "@/lib/domains";
 import { notifyOwner, sendProspectEmail } from "@/lib/email";
 import { PRICE_PER_EMAIL_CENTS } from "@/lib/pricing";
 import { adminClient } from "@/lib/supabase/admin";
@@ -64,6 +65,8 @@ export async function handleInboundReply(opts: {
   if (!business) return;
   const { data: account } = await db.from("accounts").select("*").eq("user_id", business.user_id).single<Account>();
   if (!account) return;
+  // Suspended accounts, or senders whose domain isn't theirs/verified, never auto-reply.
+  const canReply = !account.suspended && account.sender_email && !(await senderProblem(account.user_id, account.sender_email));
 
   // Webhooks can be delivered more than once; handle each email once.
   if (opts.rfcMessageId) {
@@ -95,7 +98,7 @@ export async function handleInboundReply(opts: {
 
   // Only auto-answer the person we emailed; anything else waits for a human.
   const fromAddress = opts.from.toLowerCase().match(/[^\s<>"]+@[^\s<>"]+/)?.[0] ?? "";
-  if (fromAddress !== prospect.email.toLowerCase()) {
+  if (!canReply || fromAddress !== prospect.email.toLowerCase()) {
     await db.from("prospects").update({ status: "replied", next_action_at: null }).eq("id", prospect.id);
     return;
   }

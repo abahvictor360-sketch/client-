@@ -2,6 +2,8 @@
 export const PRICE_PER_EMAIL_CENTS = 4;
 // New accounts get a free trial: no card, no subscription.
 export const TRIAL_DAYS = 3;
+// Emails per day (all campaigns together) while on the free trial.
+export const TRIAL_MAX_EMAILS_PER_DAY = 50;
 export const TOP_UP_OPTIONS_CENTS = [2000, 5000, 10000, 25000];
 
 /** "$30" for whole dollars, "$0.04" otherwise. */

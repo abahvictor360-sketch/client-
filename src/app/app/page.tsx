@@ -20,9 +20,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-12">
       <section className="max-w-2xl">
-        <h1 className="text-3xl sm:text-4xl">{hasCampaigns ? "Campaigns" : "What are you selling?"}</h1>
+        <h1 className="text-3xl sm:text-4xl">{hasCampaigns ? "Campaigns" : "Let’s find your next customers"}</h1>
         <p className="mt-2 text-muted">
-          Paste a website, or describe what you sell. The agent studies it and the competition, then proposes who to sell to.
+          Share your business website (or describe your business). We work out who your ideal customers are, find them, and reach out for you.
         </p>
         <div className="mt-6">
           <NewCampaignForm website={website} about={about} autoStart={Boolean(website || about) && !hasCampaigns} />

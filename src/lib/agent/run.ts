@@ -1,8 +1,9 @@
 import { enrichPeople, searchPeople } from "@/lib/apollo";
 import { charge, refund } from "@/lib/agent/billing";
 import { writeEmail } from "@/lib/agent/write";
+import { senderProblem } from "@/lib/domains";
 import { missingSenderFields, sendProspectEmail } from "@/lib/email";
-import { PRICE_PER_EMAIL_CENTS } from "@/lib/pricing";
+import { PRICE_PER_EMAIL_CENTS, TRIAL_MAX_EMAILS_PER_DAY, trialStatus } from "@/lib/pricing";
 import { adminClient } from "@/lib/supabase/admin";
 import type { Account, Business, Message, Prospect, Segment, SegmentStatus } from "@/lib/types";
 
@@ -194,7 +195,12 @@ async function sendStep(db: Db, ctx: { account: Account; business: Business; seg
 
 export async function runBusiness(db: Db, business: Business) {
   const { data: account } = await db.from("accounts").select("*").eq("user_id", business.user_id).single<Account>();
-  if (!account || missingSenderFields(account).length || !withinSendingHours(account)) return { sent: 0 };
+  if (!account || account.suspended || missingSenderFields(account).length || !withinSendingHours(account)) {
+    return { sent: 0 };
+  }
+  // Only send from a domain this user connected and verified (re-checked every run).
+  const problem = await senderProblem(account.user_id, account.sender_email!);
+  if (problem) return { sent: 0, skipped: "sender_domain" };
 
   await optimizeSegments(db, business.id);
 
@@ -206,7 +212,20 @@ export async function runBusiness(db: Db, business: Business) {
     .eq("business_id", business.id)
     .eq("direction", "outbound")
     .gte("created_at", startOfDay.toISOString());
-  const dailyCap = Math.min(business.max_emails_per_day, Math.floor(business.daily_budget_cents / PRICE_PER_EMAIL_CENTS));
+  let dailyCap = Math.min(business.max_emails_per_day, Math.floor(business.daily_budget_cents / PRICE_PER_EMAIL_CENTS));
+
+  // Free trials are capped across all of the user's campaigns, so a trial
+  // can't be used to send unlimited mail at the platform's expense.
+  if (trialStatus(account.trial_ends_at).active) {
+    const { data: owned } = await db.from("businesses").select("id").eq("user_id", account.user_id);
+    const { count: trialSentToday } = await db
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .in("business_id", (owned ?? []).map((b) => b.id))
+      .eq("direction", "outbound")
+      .gte("created_at", startOfDay.toISOString());
+    dailyCap = Math.min(dailyCap, (sentToday ?? 0) + TRIAL_MAX_EMAILS_PER_DAY - (trialSentToday ?? 0));
+  }
   let remaining = Math.min(MAX_SENDS_PER_TICK, dailyCap - (sentToday ?? 0));
   if (remaining <= 0) return { sent: 0 };
 
@@ -272,17 +291,30 @@ export async function runBusiness(db: Db, business: Business) {
 }
 
 /** One pass over every running business. Called by the cron route. */
-export async function runAgentTick() {
+export async function runAgentTick(trigger: "cron" | "admin" = "cron") {
   const db = adminClient();
+  const { data: run } = await db.from("agent_runs").insert({ trigger }).select("id").single();
   const { data: businesses } = await db.from("businesses").select("*").eq("status", "running").returns<Business[]>();
   const results: Record<string, unknown> = {};
+  const errors: { business_id: string; error: string }[] = [];
+  let sent = 0;
   for (const business of businesses ?? []) {
     try {
-      results[business.id] = await runBusiness(db, business);
+      const result = await runBusiness(db, business);
+      sent += result.sent;
+      results[business.id] = result;
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error(`Agent tick failed for business ${business.id}`, err);
-      results[business.id] = { error: err instanceof Error ? err.message : String(err) };
+      errors.push({ business_id: business.id, error: message.slice(0, 500) });
+      results[business.id] = { error: message };
     }
+  }
+  if (run) {
+    await db
+      .from("agent_runs")
+      .update({ finished_at: new Date().toISOString(), businesses: businesses?.length ?? 0, sent, errors })
+      .eq("id", run.id);
   }
   return results;
 }

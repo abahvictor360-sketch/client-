@@ -1,5 +1,6 @@
-import { lookup } from "node:dns/promises";
+import dns from "node:dns";
 import { isIP } from "node:net";
+import { Agent, fetch as undiciFetch } from "undici";
 
 const MAX_TEXT_CHARS = 40_000;
 
@@ -27,10 +28,29 @@ function isPrivateAddress(address: string): boolean {
   );
 }
 
-// The URL comes from the user, so refuse anything that resolves inside our network.
-async function assertPublicHost(url: URL) {
-  const addresses = await lookup(url.hostname, { all: true });
-  if (addresses.length === 0 || addresses.some((a) => isPrivateAddress(a.address))) {
+/**
+ * The URL comes from users, so connections are only allowed to public
+ * addresses. The check runs at connect time on the address actually used, so
+ * a hostname that re-resolves to an internal IP (DNS rebinding) is refused too.
+ */
+const publicOnly = new Agent({
+  connect: {
+    lookup(hostname, options, callback) {
+      dns.lookup(hostname, { ...options, all: true }, (err, addresses) => {
+        if (err) return callback(err, "", 0);
+        const list = addresses as dns.LookupAddress[];
+        const blocked = list.length === 0 || list.some((a) => isPrivateAddress(a.address));
+        if (blocked) return callback(new Error("That website does not resolve to a public address"), "", 0);
+        if ((options as { all?: boolean }).all) return (callback as unknown as (e: null, a: dns.LookupAddress[]) => void)(null, list);
+        callback(null, list[0].address, list[0].family);
+      });
+    },
+  },
+});
+
+function assertPublicHost(url: URL) {
+  const host = url.hostname.replace(/^\[|\]$/g, "");
+  if (isIP(host) && isPrivateAddress(host)) {
     throw new Error("That website does not resolve to a public address");
   }
 }
@@ -52,8 +72,9 @@ function htmlToText(html: string): string {
 }
 
 async function fetchPage(url: URL): Promise<{ html: string; text: string } | null> {
-  await assertPublicHost(url);
-  const response = await fetch(url, {
+  assertPublicHost(url);
+  const response = await undiciFetch(url, {
+    dispatcher: publicOnly,
     redirect: "manual",
     signal: AbortSignal.timeout(15_000),
     headers: { "user-agent": "Mozilla/5.0 (compatible; LeadloopBot/1.0)" },

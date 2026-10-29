@@ -65,7 +65,7 @@ export function AccountForm({ account }: { account: Account }) {
             required
             autoComplete="email"
             placeholder="alex@go.acme.com…"
-            hint="Must be on a domain verified in Resend. A subdomain keeps your main domain's reputation safe."
+            hint="Must be on a verified sending domain from the section above."
           />
         </div>
         <Field

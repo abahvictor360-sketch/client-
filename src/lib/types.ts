@@ -20,6 +20,7 @@ export interface Account {
   credits_cents: number;
   trial_ends_at: string;
   is_admin: boolean;
+  suspended: boolean;
 }
 
 export interface Competitor {

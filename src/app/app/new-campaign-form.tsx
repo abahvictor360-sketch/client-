@@ -29,7 +29,7 @@ export function NewCampaignForm({
     <form ref={formRef} action={action}>
       <div className="flex items-end justify-between gap-3">
         <label htmlFor="campaign-source" className="label">
-          {noWebsite ? "What you sell" : "Website to sell"}
+          {noWebsite ? "Describe your business" : "Your business website"}
         </label>
         <button type="button" onClick={() => setNoWebsite((v) => !v)} className="btn-quiet -mr-3 mb-0.5 !min-h-9">
           {noWebsite ? "I have a website" : "I don't have a website"}
@@ -46,7 +46,7 @@ export function NewCampaignForm({
             maxLength={500}
             rows={3}
             defaultValue={about}
-            placeholder="Wholesale silk flowers for event planners and florists in New Jersey…"
+            placeholder="e.g. We supply wholesale silk flowers to event planners and florists in Lagos…"
             aria-invalid={state?.error ? true : undefined}
             aria-describedby={state?.error ? errorId : hintId}
             className="input min-h-24 flex-1 py-2.5"
@@ -61,20 +61,20 @@ export function NewCampaignForm({
             inputMode="url"
             autoComplete="url"
             spellCheck={false}
-            placeholder="acme.com…"
+            placeholder="yourbusiness.com…"
             aria-invalid={state?.error ? true : undefined}
             aria-describedby={state?.error ? errorId : hintId}
             className="input min-h-12 flex-1"
           />
         )}
         <button className="btn-primary min-h-12" disabled={pending}>
-          {pending ? "Starting analysis…" : noWebsite ? "Analyze description" : "Analyze website"}
+          {pending ? "Getting started…" : "Find my leads"}
         </button>
       </div>
       {state?.error ? (
         <p id={errorId} role="alert" className="mt-1.5 text-sm text-danger">{state.error}</p>
       ) : (
-        <p id={hintId} className="hint">Nothing is sent until you review the buyer types and press Start.</p>
+        <p id={hintId} className="hint">We study your business and propose the customers to target. Nothing is sent until you review and press Start.</p>
       )}
     </form>
   );

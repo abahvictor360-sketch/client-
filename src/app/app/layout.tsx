@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect("/login");
   const { data: account } = await supabase
     .from("accounts")
-    .select("credits_cents, trial_ends_at, is_admin")
+    .select("credits_cents, trial_ends_at, is_admin, suspended")
     .eq("user_id", user.id)
     .single();
   const credits = account?.credits_cents ?? 0;
@@ -45,7 +45,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
       </header>
-      {!trial.active && credits <= 0 && (
+      {account?.suspended && (
+        <p role="alert" className="mx-auto mt-3 w-fit max-w-[calc(100%-1.5rem)] rounded-full bg-surface-2 px-4 py-2 text-center text-sm text-danger">
+          Your account is suspended, so the agent isn&apos;t sending. Contact support if you think this is a mistake.
+        </p>
+      )}
+      {!account?.suspended && !trial.active && credits <= 0 && (
         <p role="status" className="mx-auto mt-3 w-fit max-w-[calc(100%-1.5rem)] rounded-full bg-dawn-soft px-4 py-2 text-center text-sm text-dawn-ink">
           Your free trial has ended, so the agent has stopped sending.{" "}
           <a href="/app/billing" className="font-semibold underline">Add credits</a>

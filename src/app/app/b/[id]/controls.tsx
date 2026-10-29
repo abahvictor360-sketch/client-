@@ -1,9 +1,9 @@
 "use client";
 
-import { Pause, Play, RefreshCw } from "lucide-react";
+import { Pause, Play, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { reanalyzeBusiness, setBusinessRunning } from "../../actions";
+import { deleteBusiness, reanalyzeBusiness, setBusinessRunning } from "../../actions";
 
 /** Re-renders the page every few seconds while the agent is still analyzing. */
 export function AutoRefresh({ active }: { active: boolean }) {
@@ -14,6 +14,39 @@ export function AutoRefresh({ active }: { active: boolean }) {
     return () => clearInterval(timer);
   }, [active, router]);
   return null;
+}
+
+export function DeleteCampaignButton({ id, name }: { id: string; name: string }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <button
+      className="btn-quiet text-danger"
+      disabled={pending}
+      onClick={() => {
+        if (!confirm(`Delete "${name}"? Its buyer types, people and conversations are removed permanently.`)) return;
+        startTransition(() => deleteBusiness(id));
+      }}
+    >
+      <Trash2 size={16} aria-hidden="true" />
+      {pending ? "Deleting…" : "Delete campaign"}
+    </button>
+  );
+}
+
+export function StopProspectButton({ onStop }: { onStop: () => Promise<void> }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <button
+      className="btn-secondary !min-h-9"
+      disabled={pending}
+      onClick={() => {
+        if (!confirm("Stop all further emails to this person? Their conversation is kept.")) return;
+        startTransition(() => onStop());
+      }}
+    >
+      {pending ? "Stopping…" : "Stop emailing"}
+    </button>
+  );
 }
 
 export function RunControls({ id, status }: { id: string; status: string }) {
