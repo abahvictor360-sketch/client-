@@ -10,10 +10,10 @@ const links = [
 /** The floating pill navigation used on public pages. */
 export function SiteHeader() {
   return (
-    <header className="relative z-10 flex justify-center px-3 pt-4 sm:pt-6">
+    <header className="sticky top-0 z-30 flex justify-center px-3 pt-3 sm:pt-5">
       <nav
         aria-label="Main"
-        className="flex w-full max-w-3xl items-center justify-between gap-2 rounded-2xl bg-surface py-1 pl-4 pr-1.5 shadow-[var(--shadow-float)] ring-1 ring-line"
+        className="site-nav flex w-full max-w-3xl items-center justify-between gap-2 rounded-2xl bg-surface py-1 pl-4 pr-1.5 shadow-[var(--shadow-float)] ring-1 ring-line"
       >
         <Logo />
         <ul className="hidden items-center gap-1 text-sm md:flex">
