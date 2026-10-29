@@ -1,72 +1,75 @@
 @import "tailwindcss";
-@import "@fontsource-variable/bricolage-grotesque";
-@import "@fontsource-variable/public-sans";
+@import "@fontsource-variable/inter-tight";
 
 :root {
   color-scheme: light;
-  --paper: #f6f7f9;
+  --paper: #e9eaec;
+  --canvas: #f4f4f5;
   --surface: #ffffff;
-  --surface-2: #eef1f5;
-  --ink: #141a2e;
-  --muted: #586178;
-  --line: #dce1e9;
-  --night: #1b2550;
-  --night-2: #263266;
-  --night-ink: #e8ecf8;
-  --night-muted: #aeb7da;
-  --dawn: #f2a93b;
-  --dawn-soft: #fdf1dc;
-  --dawn-ink: #7a4f08;
-  --success: #1f7a55;
-  --success-soft: #e3f3ec;
+  --surface-2: #efeff1;
+  --ink: #18181b;
+  --muted: #64646c;
+  --line: #e2e2e6;
+  --teal: #2a8c7b;
+  --teal-strong: #237f6f;
+  --teal-soft: #dcf1ec;
+  --teal-ink: #1d6b5e;
+  --success: #1d6b5e;
+  --success-soft: #dcf1ec;
   --danger: #b42318;
-  --focus: #3355ff;
+  --focus: #2a8c7b;
+  /* Aliases kept for components that name the highlight "dawn". */
+  --dawn: var(--teal);
+  --dawn-soft: var(--teal-soft);
+  --dawn-ink: var(--teal-ink);
+  --shadow-float: 0 1px 2px rgba(24, 24, 27, 0.06), 0 12px 32px -12px rgba(24, 24, 27, 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --paper: #0e1222;
-    --surface: #151a2e;
-    --surface-2: #1d2340;
-    --ink: #e8ecf5;
-    --muted: #9aa3bc;
-    --line: #2a3150;
-    --night: #0a0e1c;
-    --night-2: #161c36;
-    --night-ink: #e8ecf8;
-    --night-muted: #9aa3c8;
-    --dawn: #f2b24d;
-    --dawn-soft: #2e2512;
-    --dawn-ink: #f6c878;
-    --success: #4cc38a;
-    --success-soft: #12291f;
+    --paper: #0c0c0e;
+    --canvas: #141416;
+    --surface: #1c1c1f;
+    --surface-2: #26262a;
+    --ink: #f2f2f4;
+    --muted: #a1a1aa;
+    --line: #2e2e33;
+    --teal: #5cc4b2;
+    --teal-strong: #3aa391;
+    --teal-soft: #13302b;
+    --teal-ink: #8fdccd;
+    --success: #8fdccd;
+    --success-soft: #13302b;
     --danger: #f07a6a;
-    --focus: #8ea2ff;
+    --focus: #5cc4b2;
+    --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.7);
   }
 }
 
 @theme inline {
   --color-paper: var(--paper);
+  --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --color-night: var(--night);
-  --color-night-2: var(--night-2);
-  --color-night-ink: var(--night-ink);
-  --color-night-muted: var(--night-muted);
+  --color-teal: var(--teal);
+  --color-teal-strong: var(--teal-strong);
+  --color-teal-soft: var(--teal-soft);
+  --color-teal-ink: var(--teal-ink);
   --color-dawn: var(--dawn);
   --color-dawn-soft: var(--dawn-soft);
   --color-dawn-ink: var(--dawn-ink);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
-  --font-sans: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "Public Sans Variable", ui-sans-serif, sans-serif;
-  --radius-panel: 20px;
-  --radius-control: 10px;
+  --font-sans: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
+  --radius-panel: 24px;
+  --radius-control: 12px;
+  --shadow-float: var(--shadow-float);
 }
 
 html {
@@ -84,8 +87,8 @@ body {
 h1, h2, h3 {
   font-family: var(--font-display);
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.08;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
   text-wrap: balance;
 }
 
@@ -105,19 +108,25 @@ button:not(:disabled), [role="button"] {
 
 @layer components {
   .btn-primary {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-ink px-5 text-sm font-semibold text-paper transition-[opacity,transform] hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-gradient-to-b from-teal to-teal-strong px-5 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_6px_16px_-6px_rgba(35,127,111,0.6)] dark:text-[#0b1f1b] transition-[filter,transform] hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] border border-line bg-surface px-5 text-sm font-semibold transition-[background-color,transform] hover:bg-surface-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-surface px-5 text-sm font-semibold text-ink shadow-[var(--shadow-float)] ring-1 ring-line transition-[background-color,transform] hover:bg-surface-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-quiet {
     @apply inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-control)] px-3 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink;
   }
   .panel {
-    @apply rounded-[var(--radius-panel)] border border-line bg-surface;
+    @apply rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-float)] ring-1 ring-line;
+  }
+  .glass {
+    @apply rounded-[28px] border-4 border-white/80 bg-gradient-to-b from-white to-surface-2/70 shadow-[0_24px_48px_-24px_rgba(24,24,27,0.35)] dark:border-white/10 dark:from-surface dark:to-canvas;
+  }
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-muted;
   }
   .input {
-    @apply min-h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 text-base text-ink placeholder:text-muted/80 transition-[border-color,box-shadow] focus:border-ink focus:outline-none focus:ring-3 focus:ring-[color-mix(in_srgb,var(--focus)_35%,transparent)];
+    @apply min-h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 text-base text-ink placeholder:text-muted/80 transition-[border-color,box-shadow] focus:border-teal focus:outline-none focus:ring-3 focus:ring-[color-mix(in_srgb,var(--focus)_30%,transparent)];
   }
   .label {
     @apply mb-1.5 block text-sm font-medium;
@@ -140,9 +149,24 @@ button:not(:disabled), [role="button"] {
   .data-table tr:last-child td {
     @apply border-b-0;
   }
+  /* The framed canvas the whole site sits in, with faint guide lines at the content edges. */
+  .frame {
+    @apply relative mx-auto min-h-[calc(100dvh-1.5rem)] max-w-[1280px] overflow-hidden rounded-[32px] border-[6px] border-white bg-canvas shadow-[0_2px_4px_rgba(24,24,27,0.04),0_30px_60px_-30px_rgba(24,24,27,0.25)] dark:border-white/5;
+  }
+  .frame::before,
+  .frame::after {
+    content: "";
+    @apply pointer-events-none absolute inset-y-0 hidden w-px bg-line/70 lg:block;
+  }
+  .frame::before {
+    left: 3.5rem;
+  }
+  .frame::after {
+    right: 3.5rem;
+  }
 }
 
-@keyframes log-in {
+@keyframes rise-in {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -153,12 +177,12 @@ button:not(:disabled), [role="button"] {
   }
 }
 
-.log-entry {
-  animation: log-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+.rise {
+  animation: rise-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .log-entry {
+  .rise {
     animation: none;
   }
 }

@@ -12,12 +12,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const credits = account?.credits_cents ?? 0;
 
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh p-3">
+      <div className="frame">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
-      <header className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 px-4 py-1">
+      <header className="relative z-20 flex justify-center px-3 pt-4 sm:pt-6">
+        <div className="flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-4 rounded-2xl bg-surface py-0.5 pl-4 pr-1.5 shadow-[var(--shadow-float)] ring-1 ring-line">
           <Logo href="/app" />
           <nav aria-label="App" className="flex flex-wrap items-center gap-1 text-sm">
             <NavLink href="/app" exact>Campaigns</NavLink>
@@ -33,12 +34,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
       {credits <= 0 && (
-        <p role="status" className="bg-dawn-soft px-4 py-2 text-center text-sm text-dawn-ink">
+        <p role="status" className="mx-auto mt-3 w-fit max-w-[calc(100%-1.5rem)] rounded-full bg-dawn-soft px-4 py-2 text-center text-sm text-dawn-ink">
           You&apos;re out of credits, so the agent has stopped sending.{" "}
           <a href="/app/billing" className="font-semibold underline">Add credits</a>
         </p>
       )}
-      <main id="main" className="mx-auto max-w-6xl px-4 py-8 sm:py-10">{children}</main>
+      <main id="main" className="mx-auto max-w-5xl px-5 py-8 sm:py-12">{children}</main>
+      </div>
     </div>
   );
 }

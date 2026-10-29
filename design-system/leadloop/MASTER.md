@@ -2,44 +2,42 @@
 
 The source of truth for UI decisions. Page-specific overrides go in `pages/<page>.md`.
 
-## Idea
+## Style
 
-Leadloop is an agent that works the night shift. The memorable element is **the overnight log**:
-a timestamped record of what the agent did while you slept, ending in a booked meeting at dawn.
-Everything else stays quiet so that log carries the page.
+Based on the reference the client supplied (a soft, light SaaS look):
+- A light gray page with the site sitting in one large framed canvas (32px radius, 6px white edge,
+  faint vertical guide lines at the content edges).
+- A floating pill navigation bar.
+- A centered hero: an announcement chip, a tight headline with one phrase set in a teal glass pill,
+  a teal gradient primary button and a white secondary button.
+- Three slightly tilted glass cards, each with a small product mock and a caption (small caps
+  label + mixed bold and muted text).
 
 ## Color (semantic tokens in `src/app/globals.css`)
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
-| `paper` | `#F6F7F9` | `#0E1222` | Page background (cool, never cream) |
-| `surface` | `#FFFFFF` | `#151A2E` | Panels, inputs |
-| `ink` | `#141A2E` | `#E8ECF5` | Text, primary buttons |
-| `muted` | `#586178` | `#9AA3BC` | Secondary text (≥4.5:1 on paper) |
-| `night` | `#1B2550` | `#0A0E1C` | The overnight log and agent surfaces |
-| `dawn` | `#F2A93B` | `#F2B24D` | Only for "meeting booked" moments and the live indicator |
+| `paper` | `#E9EAEC` | `#0C0C0E` | Area outside the frame |
+| `canvas` | `#F4F4F5` | `#141416` | Inside the frame |
+| `surface` | `#FFFFFF` | `#1C1C1F` | Cards, nav, inputs |
+| `ink` | `#18181B` | `#F2F2F4` | Text |
+| `muted` | `#64646C` | `#A1A1AA` | Secondary text |
+| `teal` / `teal-strong` | `#2A8C7B` / `#237F6F` | `#5CC4B2` / `#3AA391` | Primary actions, highlights |
+| `teal-soft` / `teal-ink` | `#DCF1EC` / `#1D6B5E` | `#13302B` / `#8FDCCD` | Highlight pill, positive status |
 
-Status uses text + dot, never color alone.
+Status always shows a word next to its dot.
 
 ## Type
 
-- **Bricolage Grotesque** (variable): headings and the hero; tight leading, weight 600.
-- **Public Sans** (variable): body and UI; 16px base, 1.55 line height.
-- Numbers in tables, prices and timestamps use `tabular-nums`, not a monospace face.
-- Sentence case everywhere. No ALL-CAPS labels, no single accented word in headlines, no arrows in button text.
+Inter Tight (variable) everywhere. Headlines are semibold with tight tracking (-0.035em to -0.045em).
+Numbers use `tabular-nums`.
 
-## Layout
+## Shape and depth
 
-- Max width 72rem, 16px side gutter on mobile. Content is left aligned; only short closing CTAs center.
-- Radius by hierarchy: panels 20px, controls 10px, pills fully rounded.
-- Sections are separated by space and a timeline, not stacks of identical cards.
+Radius by hierarchy: frame 32px, glass cards 28px, panels 24px, controls 12px, chips fully round.
+One soft float shadow (`--shadow-float`) plus a 1px ring for every raised surface.
 
 ## Motion
 
-One orchestrated moment: overnight log entries reveal in sequence on load (disabled under
-`prefers-reduced-motion`). Everything else is instant or answers a user action.
-
-## Quality floor
-
-Visible `:focus-visible` rings, skip link, labelled inputs with `autocomplete`, 44px touch targets,
-URL-reflected tabs, empty states that tell you what to do next, `color-scheme` and `theme-color` set.
+Hero elements rise in once on load (disabled under `prefers-reduced-motion`). Nothing else animates
+unless the user acts.

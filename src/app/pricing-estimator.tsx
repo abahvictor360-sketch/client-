@@ -25,7 +25,7 @@ export function PricingEstimator({ pricePerEmailCents }: { pricePerEmailCents: n
         step={10}
         value={perDay}
         onChange={(e) => setPerDay(Number(e.target.value))}
-        className="mt-4 h-11 w-full cursor-pointer accent-[var(--ink)]"
+        className="mt-4 h-11 w-full cursor-pointer accent-[var(--teal)]"
       />
       <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-line pt-6">
         <div>
