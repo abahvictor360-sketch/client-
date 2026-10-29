@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
+<title>You're offline · Leadloop</title>
+<style>
+  :root { --canvas: #f4f4f5; --surface: #fff; --ink: #18181b; --muted: #64646c; --line: #e2e2e6; --teal: #2a8c7b; --teal-strong: #237f6f; --on-teal: #fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --canvas: #141416; --surface: #1c1c1f; --ink: #f2f2f4; --muted: #a1a1aa; --line: #2e2e33; --teal: #5cc4b2; --teal-strong: #3aa391; --on-teal: #0b1f1b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--canvas); color: var(--ink);
+    font: 16px/1.55 "Inter Tight Variable", ui-sans-serif, system-ui, -apple-system, sans-serif; text-align: center; }
+  main { max-width: 22rem; }
+  .icon { width: 56px; height: 56px; margin: 0 auto; display: grid; place-items: center; border-radius: 16px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+  h1 { margin: 20px 0 0; font-size: 1.5rem; letter-spacing: -0.03em; line-height: 1.1; }
+  p { margin: 8px 0 0; color: var(--muted); }
+  button { margin-top: 24px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 12px; font: inherit; font-weight: 600; font-size: 14px;
+    color: var(--on-teal); background: linear-gradient(var(--teal), var(--teal-strong)); cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="icon" aria-hidden="true">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/><path d="M5 12.86a10 10 0 0 1 5.17-2.69"/><path d="M19 12.86a10 10 0 0 0-2-1.43"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="m2 2 20 20"/></svg>
+  </div>
+  <h1>You&rsquo;re offline</h1>
+  <p>Your agent keeps working in the cloud. Reconnect to see your latest replies and meetings.</p>
+  <button type="button" onclick="location.reload()">Try again</button>
+</main>
+<script>window.addEventListener("online", () => location.reload());</script>
+</body>
+</html>

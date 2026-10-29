@@ -238,7 +238,7 @@ async function accountPatch(userId: string, form: FormData): Promise<{ error: st
   return { patch };
 }
 
-export async function updateAccount(_: unknown, form: FormData) {
+export async function updateAccount(_: unknown, form: FormData): Promise<{ error?: string; message?: string }> {
   const { user, db, account } = await session();
   if (account?.suspended) return { error: SUSPENDED };
   const result = await accountPatch(user.id, form);
@@ -250,7 +250,7 @@ export async function updateAccount(_: unknown, form: FormData) {
 }
 
 /** Saves the sending schedule (account hours) and, from a campaign, its limits. */
-export async function updateSchedule(businessId: string | null, _: unknown, form: FormData) {
+export async function updateSchedule(businessId: string | null, _: unknown, form: FormData): Promise<{ error?: string; message?: string }> {
   const ctx = businessId ? await ownedBusiness(businessId) : await session();
   const result = await accountPatch(ctx.user.id, form);
   if ("error" in result) return result;

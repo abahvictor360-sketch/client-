@@ -166,7 +166,7 @@ export default async function SetupPage({ params, searchParams }: { params: Prom
                   );
                 })}
               </ul>
-              <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
+              <div className="mt-auto flex items-center justify-between gap-3 pt-4">
                 {back}
                 {liveSegments.length ? <Continue href={setupHref(id, "plan")} /> : <p className="text-sm text-danger">Keep at least one buyer type.</p>}
               </div>
@@ -202,9 +202,9 @@ export default async function SetupPage({ params, searchParams }: { params: Prom
                   <Link href="/app/billing" className="btn-secondary mt-5 w-full">Top up</Link>
                 </div>
               </div>
-              <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
+              <div className="mt-auto flex items-center justify-between gap-3 pt-4">
                 {back}
-                <Continue href={setupHref(id, "sender")} label={trial.active ? "Continue with free trial" : "Continue"} />
+                <Continue href={setupHref(id, "sender")} label="Continue" />
               </div>
             </div>
           )}

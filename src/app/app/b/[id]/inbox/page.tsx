@@ -1,3 +1,4 @@
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { StatusPill } from "@/components/status-pill";
 import { requireUser } from "@/lib/supabase/server";
@@ -65,7 +66,7 @@ export default async function InboxPage({ params, searchParams }: { params: Prom
         </EmptyState>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[20rem_1fr]">
-          <nav aria-label="Conversations" className="panel max-h-[70vh] overflow-y-auto overscroll-contain">
+          <nav aria-label="Conversations" className={`panel overflow-y-auto overscroll-contain lg:max-h-[70vh] ${selected ? "hidden lg:block" : ""}`}>
             <ul>
               {list.map((c) => (
                 <li key={c.prospect_id} className="border-b border-line last:border-0">
@@ -85,7 +86,10 @@ export default async function InboxPage({ params, searchParams }: { params: Prom
               ))}
             </ul>
           </nav>
-          <section aria-label="Conversation" className="panel space-y-4 p-4 sm:p-6">
+          <section aria-label="Conversation" className={`panel space-y-4 p-4 sm:p-6 ${selected ? "" : "hidden lg:block"}`}>
+            <Link href={`/app/b/${id}/inbox${all ? "?all=1" : ""}`} className="btn-quiet -ml-2 -mt-1 lg:hidden">
+              <ChevronLeft size={16} aria-hidden="true" /> All conversations
+            </Link>
             {active?.prospects && ["new", "contacted", "replied", "interested"].includes(active.prospects.status) && (
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
                 <p className="text-sm text-muted">Want to take this one over yourself?</p>

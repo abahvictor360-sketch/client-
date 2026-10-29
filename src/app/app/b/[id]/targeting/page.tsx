@@ -22,7 +22,33 @@ export default async function TargetingPage({ params }: { params: Promise<{ id: 
           {business.status === "analyzing" ? "They appear here when the analysis finishes." : "Choose Analyze again on the Dashboard to generate them."}
         </EmptyState>
       ) : (
-        <section aria-label="Buyer types" className="panel overflow-x-auto">
+        <>
+        {/* Phones: one card per buyer type. */}
+        <ul aria-label="Buyer types" className="space-y-3 sm:hidden">
+          {segments.map((s) => (
+            <li key={s.id} className="panel p-4">
+              <div className="flex items-start justify-between gap-3">
+                <Link href={`/app/b/${id}/targeting/${s.id}`} className="font-semibold underline-offset-4 hover:underline">{s.name}</Link>
+                <StatusPill status={s.status} />
+              </div>
+              <p className="mt-1 text-sm text-muted">{s.rationale}</p>
+              <div className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3 text-sm">
+                <span className="tabular-nums text-muted">
+                  {s.fit_score}% fit · {s.sent} sent · {s.positive_replies} warm
+                  {s.positive_replies ? ` · ${formatUsd(s.spend_cents / s.positive_replies)}/lead` : ""}
+                </span>
+                {s.status !== "exhausted" && (
+                  <form action={setSegmentStatus.bind(null, id, s.id, s.status === "paused" ? "testing" : "paused")}>
+                    <button className="btn-secondary !min-h-9 !px-3" aria-label={`${s.status === "paused" ? "Resume" : "Pause"} ${s.name}`}>
+                      {s.status === "paused" ? "Resume" : "Pause"}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+        <section aria-label="Buyer types" className="panel hidden overflow-x-auto sm:block">
           <table className="data-table">
             <thead>
               <tr>
@@ -61,6 +87,7 @@ export default async function TargetingPage({ params }: { params: Promise<{ id: 
             </tbody>
           </table>
         </section>
+        </>
       )}
     </div>
   );

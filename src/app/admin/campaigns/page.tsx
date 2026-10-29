@@ -32,10 +32,10 @@ export default async function AdminCampaigns({ searchParams }: { searchParams: P
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-3xl sm:text-4xl">Campaigns <span className="text-muted">({rows.length})</span></h1>
-        <form className="flex gap-2" role="search">
+        <form className="flex w-full gap-2 sm:w-auto" role="search">
           {status && <input type="hidden" name="status" value={status} />}
           <label htmlFor="campaign-search" className="sr-only">Search campaigns</label>
-          <input id="campaign-search" name="q" defaultValue={q} placeholder="Search name, site or owner…" autoComplete="off" className="input !min-h-10 w-64" />
+          <input id="campaign-search" name="q" defaultValue={q} placeholder="Search name, site or owner…" autoComplete="off" className="input !min-h-10 min-w-0 flex-1 sm:w-64 sm:flex-none" />
           <button className="btn-secondary !min-h-10">Search</button>
         </form>
       </div>

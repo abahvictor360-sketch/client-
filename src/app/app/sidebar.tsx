@@ -25,6 +25,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/(auth)/actions";
 import { Logo } from "@/components/logo";
+import { InstallApp } from "@/components/pwa";
 
 export type SidebarBusiness = {
   id: string;
@@ -241,6 +242,7 @@ export function Sidebar({ businesses, email, isAdmin, plan }: {
         )}
       </nav>
 
+      <InstallApp className="pb-1" />
       <div className="border-t border-line pt-2">
         <AccountMenu email={email} isAdmin={isAdmin} />
       </div>
@@ -250,17 +252,62 @@ export function Sidebar({ businesses, email, isAdmin, plan }: {
   return (
     <>
       {/* Phones and tablets: a top bar that opens the same navigation as a drawer. */}
-      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-line bg-paper/90 px-3 backdrop-blur lg:hidden">
+      <div className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-line bg-canvas/90 px-3 pt-[env(safe-area-inset-top)] backdrop-blur lg:hidden">
         <Logo href="/app" />
+        {current && <span className="min-w-0 truncate text-sm font-medium text-muted">{current.label}</span>}
         <button className="btn-quiet" aria-expanded={open} aria-controls="app-sidebar" onClick={() => setOpen((v) => !v)}>
           {open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
           <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
         </button>
       </div>
+
+      {/* Phones: thumb-reach tabs for the pages used most. */}
+      <nav aria-label="Quick" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+        <ul className="mx-auto flex max-w-md">
+          {(base
+            ? [
+                { href: base, label: "Home", icon: CircleGauge, exact: true },
+                { href: `${base}/inbox`, label: "Inbox", icon: Inbox },
+                { href: `${base}/sent`, label: "Sent", icon: Send },
+                { href: `${base}/targeting`, label: "Targeting", icon: Crosshair },
+              ]
+            : [
+                { href: "/app", label: "New", icon: Plus, exact: true },
+                { href: "/app/settings", label: "Sender", icon: Globe },
+                { href: "/app/billing", label: "Billing", icon: Wallet },
+              ]
+          ).map(({ href, label, icon: Icon, exact }) => {
+            const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <li key={href} className="flex-1">
+                <Link
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${active ? "text-teal-ink" : "text-muted"}`}
+                >
+                  <Icon size={20} aria-hidden />
+                  {label}
+                </Link>
+              </li>
+            );
+          })}
+          <li className="flex-1">
+            <button
+              onClick={() => setOpen(true)}
+              aria-controls="app-sidebar"
+              aria-expanded={open}
+              className="flex min-h-14 w-full flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-muted"
+            >
+              <Menu size={20} aria-hidden="true" />
+              More
+            </button>
+          </li>
+        </ul>
+      </nav>
       {open && <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
       <aside
         id="app-sidebar"
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-paper p-3 pt-4 transition-transform lg:sticky lg:top-0 lg:z-auto lg:h-dvh lg:w-64 lg:shrink-0 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-paper p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] transition-transform lg:sticky lg:top-0 lg:z-auto lg:h-dvh lg:w-64 lg:shrink-0 lg:translate-x-0 ${
           open ? "translate-x-0 shadow-[var(--shadow-float)]" : "-translate-x-full"
         } motion-reduce:transition-none`}
       >

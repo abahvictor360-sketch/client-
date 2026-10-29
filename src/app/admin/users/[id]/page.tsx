@@ -63,7 +63,7 @@ export default async function AdminUser({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <section className="panel space-y-4 p-6" aria-labelledby="credits-title">
           <h2 id="credits-title" className="text-xl">Credits and trial</h2>
           <GrantCreditsForm userId={id} />

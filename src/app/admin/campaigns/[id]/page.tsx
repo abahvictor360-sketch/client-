@@ -55,7 +55,7 @@ export default async function AdminCampaign({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      <dl className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-panel)] border border-line bg-line [gap:1px] sm:grid-cols-5">
+      <dl className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-panel)] border border-line bg-line [gap:1px] sm:grid-cols-5 [&>:last-child]:col-span-2 sm:[&>:last-child]:col-span-1">
         {[
           ["People found", prospectCounts.data?.length ?? 0],
           ["Contacted", (byStatus.get("contacted") ?? 0) + (byStatus.get("done") ?? 0)],

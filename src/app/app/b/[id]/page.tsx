@@ -201,7 +201,7 @@ export default async function Dashboard({
           <DailyChart title="Emails sent" unit="sent" total={days.reduce((s, d) => s + Number(d.sent), 0)} days={days.map((d) => ({ day: d.day, value: Number(d.sent) }))} />
           <DailyChart title="Replies" unit="replies" total={days.reduce((s, d) => s + Number(d.replies), 0)} days={days.map((d) => ({ day: d.day, value: Number(d.replies) }))} />
         </div>
-        <dl className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-panel)] bg-line ring-1 ring-line [gap:1px] sm:grid-cols-5">
+        <dl className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-panel)] bg-line ring-1 ring-line [gap:1px] sm:grid-cols-5 [&>:last-child]:col-span-2 sm:[&>:last-child]:col-span-1">
           {[
             { label: "Emails sent (all time)", value: totals.sent.toLocaleString("en-US") },
             { label: "Replies", value: totals.replies.toLocaleString("en-US") },

@@ -42,10 +42,10 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-3xl sm:text-4xl">Users <span className="text-muted">({rows.length})</span></h1>
-        <form className="flex gap-2" role="search">
+        <form className="flex w-full gap-2 sm:w-auto" role="search">
           {filter && <input type="hidden" name="filter" value={filter} />}
           <label htmlFor="user-search" className="sr-only">Search by email</label>
-          <input id="user-search" name="q" defaultValue={q} placeholder="Search by email…" autoComplete="off" className="input !min-h-10 w-64" />
+          <input id="user-search" name="q" defaultValue={q} placeholder="Search by email…" autoComplete="off" className="input !min-h-10 min-w-0 flex-1 sm:w-64 sm:flex-none" />
           <button className="btn-secondary !min-h-10">Search</button>
         </form>
       </div>

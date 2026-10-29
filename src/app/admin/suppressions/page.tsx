@@ -27,9 +27,9 @@ export default async function AdminSuppressions({ searchParams }: { searchParams
       </div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <SuppressionForm />
-        <form className="flex gap-2" role="search">
+        <form className="flex w-full gap-2 sm:w-auto" role="search">
           <label htmlFor="sup-search" className="sr-only">Search</label>
-          <input id="sup-search" name="q" defaultValue={q} placeholder="Search…" autoComplete="off" className="input !min-h-10 w-56" />
+          <input id="sup-search" name="q" defaultValue={q} placeholder="Search…" autoComplete="off" className="input !min-h-10 min-w-0 flex-1 sm:w-56 sm:flex-none" />
           <button className="btn-secondary !min-h-10">Search</button>
         </form>
       </div>

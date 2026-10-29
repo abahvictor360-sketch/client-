@@ -74,6 +74,14 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Installed app (PWA): no pull-to-refresh bounce revealing the page behind. */
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior-y: none;
+  }
 }
 
 body {
@@ -117,7 +125,12 @@ button:not(:disabled), [role="button"] {
     @apply inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-control)] px-3 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink;
   }
   .panel {
-    @apply rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-float)] ring-1 ring-line;
+    @apply relative rounded-[var(--radius-panel)] bg-surface shadow-[var(--shadow-float)] ring-1 ring-line;
+  }
+  /* A table that's wider than a phone scrolls inside its card instead of the page. */
+  .panel:has(> .data-table),
+  .panel:has(> div > .data-table) {
+    @apply overflow-x-auto overscroll-x-contain;
   }
   .glass {
     @apply rounded-[28px] border-4 border-white/80 bg-gradient-to-b from-white to-surface-2/70 shadow-[0_24px_48px_-24px_rgba(24,24,27,0.35)] dark:border-white/10 dark:from-surface dark:to-canvas;
@@ -141,7 +154,7 @@ button:not(:disabled), [role="button"] {
     @apply w-full text-sm tabular-nums;
   }
   .data-table th {
-    @apply border-b border-line px-4 py-3 text-left text-xs font-medium text-muted;
+    @apply whitespace-nowrap border-b border-line px-4 py-3 text-left text-xs font-medium text-muted;
   }
   .data-table td {
     @apply border-b border-line px-4 py-3 align-top;

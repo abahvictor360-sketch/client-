@@ -62,7 +62,7 @@ export default async function SegmentPage({ params }: { params: Promise<{ id: st
           )
         }
       />
-      <dl className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-panel)] bg-line ring-1 ring-line [gap:1px] sm:grid-cols-5">
+      <dl className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-panel)] bg-line ring-1 ring-line [gap:1px] sm:grid-cols-5 [&>:last-child]:col-span-2 sm:[&>:last-child]:col-span-1">
         {stats.map((s) => (
           <div key={s.label} className="bg-surface p-4">
             <dt className="text-sm text-muted">{s.label}</dt>

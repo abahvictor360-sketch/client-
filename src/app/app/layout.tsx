@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }));
 
   return (
-    <div className="min-h-dvh lg:flex">
+    <div className="min-h-dvh bg-canvas lg:flex lg:bg-transparent">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
@@ -52,7 +52,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <a href="/app/billing" className="font-semibold underline">Top up</a>
             </p>
           )}
-          <main id="main" className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">{children}</main>
+          <main id="main" className="mx-auto max-w-6xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-8 sm:pt-10 lg:pb-10">{children}</main>
         </div>
       </div>
     </div>

@@ -94,7 +94,7 @@ export default async function AdminOverview() {
         </section>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <section aria-labelledby="system-title" className="panel p-6">
           <h2 id="system-title" className="text-xl">System status</h2>
           <ul className="mt-4 space-y-2 text-sm">
@@ -121,7 +121,8 @@ export default async function AdminOverview() {
               : "The agent hasn't run yet."}{" "}
             It sends only on weekdays, 08:00–18:00 in each user&apos;s timezone.
           </p>
-          <table className="data-table mt-4">
+          <div className="-mx-6 mt-4 overflow-x-auto px-2">
+          <table className="data-table">
             <thead>
               <tr>
                 <th scope="col">Started</th>
@@ -148,6 +149,7 @@ export default async function AdminOverview() {
               )}
             </tbody>
           </table>
+          </div>
         </section>
       </div>
     </>
