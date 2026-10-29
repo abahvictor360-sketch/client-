@@ -223,6 +223,9 @@ export function Sidebar({ businesses, email, isAdmin, plan }: {
                   </Link>
                 );
               })}
+              <Link href={`${base}/targeting/new`} className="flex min-h-9 items-center gap-2.5 rounded-[10px] px-3 text-sm text-muted hover:bg-surface-2 hover:text-ink">
+                <Plus size={16} aria-hidden="true" /> New buyer type
+              </Link>
               {current!.segments.length === 0 && (
                 <p className="px-3 py-1 text-sm text-muted">
                   {current!.status === "analyzing" ? "Working them out…" : "None yet."}

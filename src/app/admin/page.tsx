@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { adminDateTime, configStatus, loadUsers } from "@/lib/admin-data";
+import { DailyChart } from "@/app/app/b/[id]/daily-chart";
+import { adminDateTime, configStatus, loadSetupProgress, loadUsers, SETUP_STEPS } from "@/lib/admin-data";
 import { formatUsd, trialStatus } from "@/lib/pricing";
 import { adminClient } from "@/lib/supabase/admin";
 import { RunAgentButton } from "./ui";
@@ -11,9 +12,9 @@ export default async function AdminOverview() {
   const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
   const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
 
-  const [{ users, emailById }, accounts, businesses, revenue, sentAll, sentDay, replies, meetings, runs] = await Promise.all([
+  const [{ users, emailById }, accounts, businesses, revenue, sentAll, sentDay, replies, meetings, runs, progress, daily] = await Promise.all([
     loadUsers(),
-    db.from("accounts").select("user_id, trial_ends_at, credits_cents, suspended"),
+    db.from("accounts").select("user_id, trial_ends_at, credits_cents, suspended, heard_from"),
     db.from("businesses").select("id, user_id, name, website, status, error, analysis_started_at"),
     db.from("credit_ledger").select("user_id, amount_cents, created_at").eq("reason", "top_up"),
     db.from("messages").select("id", { count: "exact", head: true }).eq("direction", "outbound"),
@@ -21,7 +22,17 @@ export default async function AdminOverview() {
     db.from("messages").select("id", { count: "exact", head: true }).eq("direction", "inbound"),
     db.from("meetings").select("id", { count: "exact", head: true }).eq("status", "booked"),
     db.from("agent_runs").select("*").order("started_at", { ascending: false }).limit(10),
+    loadSetupProgress(),
+    db.rpc("admin_message_daily", { p_days: 30 }),
   ]);
+  const days = ((daily.data ?? []) as { day: string; sent: number; replies: number }[]).map((d) => ({ day: d.day, sent: Number(d.sent), replies: Number(d.replies) }));
+  const funnel = [
+    { label: "Signed up", count: users.length },
+    ...SETUP_STEPS.map((step) => ({ label: step.label, count: [...progress.values()].filter((p) => p[step.key]).length })),
+  ];
+  const sources = new Map<string, number>();
+  for (const a of accounts.data ?? []) sources.set(a.heard_from ?? "Not answered", (sources.get(a.heard_from ?? "Not answered") ?? 0) + 1);
+  const sourceRows = [...sources.entries()].sort((a, b) => b[1] - a[1]);
 
   const accs = accounts.data ?? [];
   const biz = businesses.data ?? [];
@@ -67,6 +78,49 @@ export default async function AdminOverview() {
           </div>
         ))}
       </dl>
+
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+        <DailyChart title="Emails sent, all users (30 days)" unit="sent" total={days.reduce((t, d) => t + d.sent, 0)} days={days.map((d) => ({ day: d.day, value: d.sent }))} />
+        <DailyChart title="Replies, all users (30 days)" unit="replies" total={days.reduce((t, d) => t + d.replies, 0)} days={days.map((d) => ({ day: d.day, value: d.replies }))} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
+        <section aria-labelledby="funnel-title" className="panel p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="funnel-title" className="text-xl">Onboarding funnel</h2>
+            <Link href="/admin/users?filter=stuck" className="text-sm underline underline-offset-4">Users not launched yet</Link>
+          </div>
+          <p className="mt-1 text-sm text-muted">How many users reached each step of the Get started checklist.</p>
+          <ol className="mt-4 space-y-2.5">
+            {funnel.map((f) => (
+              <li key={f.label} className="grid grid-cols-[8.5rem_1fr_3rem] items-center gap-3 text-sm">
+                <span className="text-muted">{f.label}</span>
+                <span className="h-2.5 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+                  <span className="block h-full rounded-full bg-teal" style={{ width: `${funnel[0].count ? Math.max(f.count ? 2 : 0, (f.count / funnel[0].count) * 100) : 0}%` }} />
+                </span>
+                <span className="text-right font-semibold tabular-nums">{f.count}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section aria-labelledby="sources-title" className="panel p-6">
+          <h2 id="sources-title" className="text-xl">How users found us</h2>
+          <p className="mt-1 text-sm text-muted">From the &ldquo;How did you hear about us?&rdquo; setup step.</p>
+          <ol className="mt-4 space-y-2.5">
+            {sourceRows.map(([label, count]) => (
+              <li key={label} className="grid grid-cols-[10rem_1fr_3rem] items-center gap-3 text-sm">
+                <span className={label === "Not answered" ? "text-muted" : ""}>{label}</span>
+                <span className="h-2.5 overflow-hidden rounded-full bg-surface-2" aria-hidden="true">
+                  <span className={`block h-full rounded-full ${label === "Not answered" ? "bg-muted/40" : "bg-teal"}`} style={{ width: `${(count / Math.max(1, accounts.data?.length ?? 1)) * 100}%` }} />
+                </span>
+                <span className="text-right font-semibold tabular-nums">{count}</span>
+              </li>
+            ))}
+            {!sourceRows.length && <li className="text-sm text-muted">No users yet.</li>}
+          </ol>
+        </section>
+      </div>
 
       {(missingRequired.length > 0 || failed.length > 0 || stalled.length > 0 || (lastRunAgeMin !== null && lastRunAgeMin > 30)) && (
         <section aria-labelledby="attention-title" className="panel space-y-3 border-danger/30 p-6">

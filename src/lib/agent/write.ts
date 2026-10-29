@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { factsBlock } from "@/lib/agent/facts";
+import { briefBlock } from "@/lib/agent/segment-shape";
 import { generateObject } from "@/lib/claude";
 import type { Account, Business, Message, Prospect, Segment } from "@/lib/types";
 import { normalizeWebsite, readWebsite } from "@/lib/website";
@@ -62,7 +63,7 @@ Offer: ${business.offer}
 Value props:
 ${business.value_props.map((v) => `- ${v}`).join("\n")}${factsBlock(business.facts)}
 
-Target segment: ${segment.name} — ${segment.rationale ?? segment.description ?? ""}
+Target segment: ${segment.name} — ${segment.rationale ?? segment.description ?? ""}${briefBlock(segment.brief)}
 
 Prospect: ${prospect.first_name ?? ""} ${prospect.last_name ?? ""}, ${prospect.title ?? ""} at ${prospect.company ?? "their company"}
 <prospect_research>

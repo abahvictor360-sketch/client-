@@ -22,6 +22,7 @@ export interface Account {
   is_admin: boolean;
   suspended: boolean;
   heard_from: string | null;
+  onboarding_dismissed_at: string | null;
 }
 
 export interface Competitor {
@@ -65,6 +66,15 @@ export interface SegmentFilters {
   employee_ranges: string[];
 }
 
+/** What the agent pitches to one buyer type (editable on its page). */
+export interface SegmentBrief {
+  offer?: string;
+  customer_problem?: string;
+  example_clients?: string[];
+  positive_criteria?: string[];
+  negative_criteria?: string[];
+}
+
 export interface Segment {
   id: string;
   business_id: string;
@@ -80,6 +90,7 @@ export interface Segment {
   positive_replies: number;
   meetings: number;
   spend_cents: number;
+  brief: SegmentBrief;
 }
 
 export interface Prospect {

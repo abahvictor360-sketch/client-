@@ -16,6 +16,7 @@ export default async function TargetingPage({ params }: { params: Promise<{ id: 
       <PageHeader
         title="Targeting"
         description="The kinds of businesses the agent reaches out to. It shifts more of your budget to the buyer types that reply best. Pause any you don’t want."
+        actions={<Link href={`/app/b/${id}/targeting/new`} className="btn-primary">New buyer type</Link>}
       />
       {!segments.length ? (
         <EmptyState title="No buyer types yet">

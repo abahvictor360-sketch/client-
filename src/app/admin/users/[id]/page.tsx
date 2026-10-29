@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { Check, ChevronLeft, Minus } from "lucide-react";
 import { StatusPill } from "@/components/status-pill";
 import { requireAdmin } from "@/lib/admin";
-import { adminDate, adminDateTime } from "@/lib/admin-data";
+import { adminDate, adminDateTime, loadSetupProgress, SETUP_STEPS } from "@/lib/admin-data";
 import { formatUsd, trialStatus } from "@/lib/pricing";
 import { adminClient } from "@/lib/supabase/admin";
 import type { Account, Business } from "@/lib/types";
@@ -33,12 +33,15 @@ export default async function AdminUser({ params }: { params: Promise<{ id: stri
   if (!auth.user) notFound();
   const user = auth.user;
 
-  const [account, businesses, ledger, domains] = await Promise.all([
+  const [account, businesses, ledger, domains, progressMap, suppressions] = await Promise.all([
     db.from("accounts").select("*").eq("user_id", id).single<Account & { created_at: string }>(),
     db.from("businesses").select("*").eq("user_id", id).order("created_at", { ascending: false }).returns<Business[]>(),
     db.from("credit_ledger").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(50),
     db.from("sending_domains").select("domain, status").eq("user_id", id),
+    loadSetupProgress(),
+    db.from("user_suppressions").select("value, created_at", { count: "exact" }).eq("user_id", id).order("created_at", { ascending: false }).limit(60),
   ]);
+  const progress = progressMap.get(id);
   const a = account.data;
   const trial = trialStatus(a?.trial_ends_at);
   const self = me.id === id;
@@ -88,19 +91,59 @@ export default async function AdminUser({ params }: { params: Promise<{ id: stri
         </section>
       </div>
 
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
+        <section className="panel p-6" aria-labelledby="setup-title">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="setup-title" className="text-xl">Onboarding</h2>
+            <span className="text-sm text-muted">{progress?.done ?? 0} of {SETUP_STEPS.length} steps</span>
+          </div>
+          <ol className="mt-4 space-y-2 text-sm">
+            {SETUP_STEPS.map((step) => {
+              const done = Boolean(progress?.[step.key]);
+              return (
+                <li key={step.key} className="flex items-center gap-2.5">
+                  <span className={`grid h-5 w-5 place-items-center rounded-full ${done ? "bg-teal text-white dark:text-[#0b1f1b]" : "bg-surface-2 text-muted"}`}>
+                    {done ? <Check size={12} strokeWidth={3} aria-hidden="true" /> : <Minus size={12} aria-hidden="true" />}
+                  </span>
+                  <span className={done ? "" : "text-muted"}>{step.label}</span>
+                  <span className="sr-only">{done ? "(done)" : "(not yet)"}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <dl className="mt-4 grid grid-cols-[9rem_1fr] gap-x-3 gap-y-1 border-t border-line pt-4 text-sm">
+            <dt className="text-muted">Found us via</dt><dd>{a?.heard_from ?? "Not answered"}</dd>
+            <dt className="text-muted">Checklist</dt><dd>{a?.onboarding_dismissed_at ? `Hidden ${adminDate.format(new Date(a.onboarding_dismissed_at))}` : "Showing"}</dd>
+          </dl>
+        </section>
+
+        <section className="panel p-6" aria-labelledby="usuppress-title">
+          <h2 id="usuppress-title" className="text-xl">Suppress list <span className="text-muted">({suppressions.count ?? 0})</span></h2>
+          <p className="mt-1 text-sm text-muted">Emails and domains this user told the agent never to contact.</p>
+          {suppressions.data?.length ? (
+            <ul className="mt-3 flex flex-wrap gap-1.5">
+              {suppressions.data.map((x) => <li key={x.value} className="pill bg-surface-2 font-mono text-ink">{x.value}</li>)}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-muted">Empty.</p>
+          )}
+        </section>
+      </div>
+
       <section className="panel overflow-x-auto" aria-labelledby="ucampaigns-title">
-        <h2 id="ucampaigns-title" className="px-6 pt-5 text-xl">Campaigns</h2>
+        <h2 id="ucampaigns-title" className="px-6 pt-5 text-xl">Businesses</h2>
         <table className="data-table mt-2">
-          <thead><tr><th scope="col">Campaign</th><th scope="col">Status</th><th scope="col">Created</th></tr></thead>
+          <thead><tr><th scope="col">Business</th><th scope="col">Status</th><th scope="col">Setup</th><th scope="col">Created</th></tr></thead>
           <tbody>
             {(businesses.data ?? []).map((b) => (
               <tr key={b.id}>
                 <td><Link href={`/admin/campaigns/${b.id}`} className="font-semibold underline-offset-4 hover:underline">{b.name ?? b.website ?? "Untitled"}</Link></td>
                 <td><StatusPill status={b.status} /></td>
+                <td className="text-muted">{b.confirmed_at ? "Confirmed" : b.status === "ready" ? "In setup steps" : "–"}</td>
                 <td className="text-muted">{adminDate.format(new Date(b.created_at))}</td>
               </tr>
             ))}
-            {!businesses.data?.length && <tr><td colSpan={3} className="!py-8 text-center text-muted">No campaigns.</td></tr>}
+            {!businesses.data?.length && <tr><td colSpan={4} className="!py-8 text-center text-muted">No businesses.</td></tr>}
           </tbody>
         </table>
       </section>

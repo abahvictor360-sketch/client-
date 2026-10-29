@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { adminDate, loadUsers } from "@/lib/admin-data";
+import { adminDate, loadSetupProgress, loadUsers, SETUP_STEPS, SetupMeter } from "@/lib/admin-data";
 import { formatUsd, trialStatus } from "@/lib/pricing";
 import { adminClient } from "@/lib/supabase/admin";
 
@@ -8,10 +8,11 @@ export const metadata = { title: "Users" };
 export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ q?: string; filter?: string }> }) {
   const { q, filter } = await searchParams;
   const db = adminClient();
-  const [{ users }, accounts, businesses] = await Promise.all([
+  const [{ users }, accounts, businesses, progress] = await Promise.all([
     loadUsers(),
-    db.from("accounts").select("user_id, trial_ends_at, credits_cents, is_admin, suspended"),
+    db.from("accounts").select("user_id, trial_ends_at, credits_cents, is_admin, suspended, heard_from"),
     db.from("businesses").select("user_id"),
+    loadSetupProgress(),
   ]);
   const accountById = new Map((accounts.data ?? []).map((a) => [a.user_id, a]));
   const campaigns = new Map<string, number>();
@@ -26,6 +27,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
       if (filter === "suspended") return a?.suspended;
       if (filter === "admins") return a?.is_admin;
       if (filter === "unconfirmed") return !u.email_confirmed_at;
+      if (filter === "stuck") return !progress.get(u.id)?.launched;
       return true;
     })
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -36,6 +38,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
     { id: "suspended", label: "Suspended" },
     { id: "admins", label: "Admins" },
     { id: "unconfirmed", label: "Email not confirmed" },
+    { id: "stuck", label: "Not launched yet" },
   ];
 
   return (
@@ -69,7 +72,9 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
               <th scope="col">Joined</th>
               <th scope="col">Trial</th>
               <th scope="col" className="!text-right">Credits</th>
-              <th scope="col" className="!text-right">Campaigns</th>
+              <th scope="col" className="!text-right">Businesses</th>
+              <th scope="col">Setup ({SETUP_STEPS.length} steps)</th>
+              <th scope="col">Found us via</th>
               <th scope="col">Status</th>
             </tr>
           </thead>
@@ -89,6 +94,8 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                   <td>{trial.active ? <span className="text-success">{trial.daysLeft}d left</span> : <span className="text-muted">Ended</span>}</td>
                   <td className="text-right">{formatUsd(a?.credits_cents ?? 0)}</td>
                   <td className="text-right">{campaigns.get(u.id) ?? 0}</td>
+                  <td><SetupMeter progress={progress.get(u.id)} /></td>
+                  <td className="whitespace-nowrap text-muted">{a?.heard_from ?? "–"}</td>
                   <td className="space-x-1 whitespace-nowrap">
                     {a?.is_admin && <span className="pill bg-ink text-canvas">Admin</span>}
                     {a?.suspended && <span className="pill bg-surface-2 text-danger">Suspended</span>}
@@ -98,7 +105,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
               );
             })}
             {!rows.length && (
-              <tr><td colSpan={6} className="!py-12 text-center text-muted">{query || filter ? "No users match." : "No one has signed up yet."}</td></tr>
+              <tr><td colSpan={8} className="!py-12 text-center text-muted">{query || filter ? "No users match." : "No one has signed up yet."}</td></tr>
             )}
           </tbody>
         </table>

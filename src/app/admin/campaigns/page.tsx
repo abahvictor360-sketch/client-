@@ -14,9 +14,10 @@ export default async function AdminCampaigns({ searchParams }: { searchParams: P
     db.from("businesses").select("*").order("created_at", { ascending: false }).returns<Business[]>(),
     db.from("segments").select("business_id, sent, positive_replies, meetings, spend_cents").returns<Segment[]>(),
   ]);
-  const totals = new Map<string, { sent: number; warm: number; meetings: number }>();
+  const totals = new Map<string, { sent: number; warm: number; meetings: number; types: number }>();
   for (const s of segments.data ?? []) {
-    const t = totals.get(s.business_id) ?? { sent: 0, warm: 0, meetings: 0 };
+    const t = totals.get(s.business_id) ?? { sent: 0, warm: 0, meetings: 0, types: 0 };
+    t.types += 1;
     t.sent += s.sent;
     t.warm += s.positive_replies;
     t.meetings += s.meetings;
@@ -24,9 +25,9 @@ export default async function AdminCampaigns({ searchParams }: { searchParams: P
   }
   const query = (q ?? "").trim().toLowerCase();
   const rows = (businesses.data ?? [])
-    .filter((b) => !status || b.status === status)
+    .filter((b) => !status || (status === "setup" ? b.status === "ready" && !b.confirmed_at : b.status === status))
     .filter((b) => !query || `${b.name ?? ""} ${b.website ?? ""} ${emailById.get(b.user_id) ?? ""}`.toLowerCase().includes(query));
-  const statuses = ["", "running", "ready", "analyzing", "paused", "failed"];
+  const statuses = ["", "running", "setup", "ready", "analyzing", "paused", "failed"];
 
   return (
     <>
@@ -47,7 +48,7 @@ export default async function AdminCampaigns({ searchParams }: { searchParams: P
             aria-current={(status ?? "") === s ? "page" : undefined}
             className={`pill !px-3 !py-1.5 capitalize ring-1 ring-line ${(status ?? "") === s ? "bg-ink text-canvas" : "bg-surface"}`}
           >
-            {s || "All"}
+            {s === "setup" ? "In setup steps" : s || "All"}
           </Link>
         ))}
       </nav>
@@ -58,6 +59,7 @@ export default async function AdminCampaigns({ searchParams }: { searchParams: P
               <th scope="col">Campaign</th>
               <th scope="col">Owner</th>
               <th scope="col">Status</th>
+              <th scope="col" className="!text-right">Buyer types</th>
               <th scope="col" className="!text-right">Sent</th>
               <th scope="col" className="!text-right">Warm</th>
               <th scope="col" className="!text-right">Meetings</th>
@@ -66,7 +68,7 @@ export default async function AdminCampaigns({ searchParams }: { searchParams: P
           </thead>
           <tbody>
             {rows.map((b) => {
-              const t = totals.get(b.id) ?? { sent: 0, warm: 0, meetings: 0 };
+              const t = totals.get(b.id) ?? { sent: 0, warm: 0, meetings: 0, types: 0 };
               return (
                 <tr key={b.id}>
                   <td className="min-w-56">
@@ -76,7 +78,11 @@ export default async function AdminCampaigns({ searchParams }: { searchParams: P
                     <p className="max-w-xs truncate text-muted">{b.website ?? b.description}</p>
                   </td>
                   <td><Link href={`/admin/users/${b.user_id}`} className="underline-offset-4 hover:underline [overflow-wrap:anywhere]">{emailById.get(b.user_id)}</Link></td>
-                  <td><StatusPill status={b.status} /></td>
+                  <td>
+                    <StatusPill status={b.status} />
+                    {b.status === "ready" && !b.confirmed_at && <p className="mt-1 text-xs text-muted">In setup steps</p>}
+                  </td>
+                  <td className="text-right">{t.types}</td>
                   <td className="text-right">{t.sent}</td>
                   <td className="text-right">{t.warm}</td>
                   <td className="text-right">{t.meetings}</td>
@@ -84,7 +90,7 @@ export default async function AdminCampaigns({ searchParams }: { searchParams: P
                 </tr>
               );
             })}
-            {!rows.length && <tr><td colSpan={7} className="!py-12 text-center text-muted">No campaigns match.</td></tr>}
+            {!rows.length && <tr><td colSpan={8} className="!py-12 text-center text-muted">No campaigns match.</td></tr>}
           </tbody>
         </table>
       </section>

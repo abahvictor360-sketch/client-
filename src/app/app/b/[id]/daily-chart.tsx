@@ -45,7 +45,7 @@ export function DailyChart({ title, total, unit, days }: {
                       style={{ height: d.value ? `${Math.max(3, (d.value / max) * 100)}%` : "2px", opacity: d.value ? undefined : 0.35 }}
                     />
                   </div>
-                  <span className={`absolute bottom-0 text-[11px] text-muted ${i % showEvery === 0 || i === days.length - 1 ? "" : "invisible"}`}>
+                  <span className={`absolute bottom-0 whitespace-nowrap text-[11px] text-muted ${(days.length - 1 - i) % showEvery === 0 ? "" : "invisible"}`}>
                     {days.length > 14 ? dateLabel.format(date) : dayLabel.format(date)}
                   </span>
                   <span className="pointer-events-none absolute bottom-full z-10 mb-1 hidden whitespace-nowrap rounded-lg bg-ink px-2 py-1 text-xs text-surface shadow-[var(--shadow-float)] group-hover:block">

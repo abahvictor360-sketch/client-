@@ -29,7 +29,8 @@ const labels: Record<string, string> = {
   wrong_person: "Wrong person",
 };
 
-export function StatusPill({ status }: { status: string }) {
+export function StatusPill({ status: raw }: { status: string | null | undefined }) {
+  const status = raw ?? "unknown";
   const label = labels[status] ?? status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, " ");
   return (
     <span className={`pill ${tone[status] ?? "bg-surface-2 text-muted"}`}>

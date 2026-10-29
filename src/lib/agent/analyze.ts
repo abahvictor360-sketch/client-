@@ -1,15 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
+import { BriefShape, FiltersShape } from "@/lib/agent/segment-shape";
 import { generateObject } from "@/lib/claude";
 import { adminClient } from "@/lib/supabase/admin";
 import { readWebsite } from "@/lib/website";
-
-const SENIORITIES = [
-  "owner", "founder", "c_suite", "partner", "vp", "head", "director", "manager", "senior",
-] as const;
-const EMPLOYEE_RANGES = [
-  "1,10", "11,20", "21,50", "51,100", "101,200", "201,500", "501,1000", "1001,5000", "5001,10000",
-] as const;
 
 const AnalysisSchema = z.object({
   name: z.string().describe("The company's name"),
@@ -26,13 +20,8 @@ const AnalysisSchema = z.object({
         description: z.string(),
         rationale: z.string().describe("Why this buyer needs the offer"),
         fit_score: z.number().int().describe("0-100 likelihood this segment buys"),
-        person_titles: z.array(z.string()).describe("Job titles of the decision maker"),
-        person_seniorities: z.array(z.enum(SENIORITIES)),
-        person_locations: z.array(z.string()).describe("Countries, states or cities the company can serve"),
-        organization_keywords: z
-          .array(z.string())
-          .describe("Industry keywords that identify these companies in a B2B database"),
-        employee_ranges: z.array(z.enum(EMPLOYEE_RANGES)),
+        ...FiltersShape,
+        ...BriefShape,
       }),
     )
     .describe("5-8 distinct buyer segments, best fit first"),
@@ -103,6 +92,13 @@ export async function analyzeBusiness(businessId: string) {
             person_locations: s.person_locations,
             organization_keywords: s.organization_keywords,
             employee_ranges: s.employee_ranges,
+          },
+          brief: {
+            offer: s.offer,
+            customer_problem: s.customer_problem,
+            example_clients: s.example_clients.slice(0, 8),
+            positive_criteria: s.positive_criteria,
+            negative_criteria: s.negative_criteria,
           },
         })),
     );

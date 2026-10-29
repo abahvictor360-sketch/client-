@@ -4,13 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { analyzeBusiness } from "@/lib/agent/analyze";
+import { createSegmentFromDescription, steerSegment } from "@/lib/agent/steer";
 import { addSendingDomain, refreshSendingDomain, removeSendingDomain, senderProblem } from "@/lib/domains";
 import { missingSenderFields } from "@/lib/email";
 import { missingAnalysisConfig } from "@/lib/env";
 import { trialStatus } from "@/lib/pricing";
 import { adminClient } from "@/lib/supabase/admin";
 import { createClient, requireUser } from "@/lib/supabase/server";
-import type { Account } from "@/lib/types";
+import type { Account, Business, Segment, SegmentBrief, SegmentFilters } from "@/lib/types";
 import { normalizeWebsite } from "@/lib/website";
 import { HEARD_FROM, SETUP_STEPS, type SetupStep, setupHref, stepIndex } from "./b/[id]/setup/steps";
 
@@ -474,4 +475,131 @@ export async function deleteAccount(_: unknown, form: FormData) {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/?deleted=1");
+}
+
+// ---------------------------------------------------------------------------
+// Buyer type page: steering chat, editable brief, new buyer types.
+
+const MAX_STEERS_PER_DAY = 40;
+const MAX_NEW_SEGMENTS_PER_DAY = 10;
+const MAX_SEGMENTS = 15;
+
+async function ownedSegment(businessId: string, segmentId: string) {
+  const ctx = await ownedBusiness(businessId);
+  const [{ data: business }, { data: segment }] = await Promise.all([
+    ctx.db.from("businesses").select("*").eq("id", businessId).single<Business>(),
+    ctx.db.from("segments").select("*").eq("id", segmentId).eq("business_id", businessId).single<Segment>(),
+  ]);
+  if (!business || !segment) throw new Error("Not found");
+  return { ...ctx, fullBusiness: business, segment };
+}
+
+async function dailyQuota(ctx: Awaited<ReturnType<typeof session>>, kind: string, max: number) {
+  if (ctx.account?.is_admin) return null;
+  const { count } = await ctx.db
+    .from("usage_events")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", ctx.user.id)
+    .eq("kind", kind)
+    .gte("created_at", new Date(Date.now() - 86_400_000).toISOString());
+  return (count ?? 0) >= max ? `You've reached today's limit (${max}). Try again tomorrow.` : null;
+}
+
+export async function steerCampaign(businessId: string, segmentId: string, _: unknown, form: FormData): Promise<{ error?: string }> {
+  const ctx = await ownedSegment(businessId, segmentId);
+  if (ctx.account?.suspended) return { error: SUSPENDED };
+  const instruction = String(form.get("instruction") ?? "").trim();
+  if (instruction.length < 3) return { error: "Tell the agent what to change." };
+  if (instruction.length > 1000) return { error: "Keep it under 1,000 characters." };
+  const notReady = configError() ?? (await dailyQuota(ctx, "steer", MAX_STEERS_PER_DAY));
+  if (notReady) return { error: notReady };
+  await ctx.db.from("usage_events").insert({ user_id: ctx.user.id, kind: "steer" });
+  try {
+    await steerSegment(ctx.fullBusiness, ctx.segment, instruction);
+  } catch (err) {
+    console.error("Steering failed", err);
+    return { error: "The agent couldn't apply that just now. Please try again." };
+  }
+  revalidatePath(`/app/b/${businessId}`, "layout");
+  return {};
+}
+
+export async function createSegment(businessId: string, _: unknown, form: FormData): Promise<{ error?: string }> {
+  const base = await ownedBusiness(businessId);
+  if (base.account?.suspended) return { error: SUSPENDED };
+  const description = String(form.get("description") ?? "").trim();
+  if (description.length < 10) return { error: "Describe who to reach in a sentence or two." };
+  if (description.length > 600) return { error: "Keep it under 600 characters." };
+  const { count } = await base.db.from("segments").select("id", { count: "exact", head: true }).eq("business_id", businessId);
+  if ((count ?? 0) >= MAX_SEGMENTS) return { error: `A business can have up to ${MAX_SEGMENTS} buyer types. Delete or pause one first.` };
+  const notReady = configError() ?? (await dailyQuota(base, "segment", MAX_NEW_SEGMENTS_PER_DAY));
+  if (notReady) return { error: notReady };
+  const { data: business } = await base.db.from("businesses").select("*").eq("id", businessId).single<Business>();
+  if (!business?.summary) return { error: "Wait for the business analysis to finish first." };
+  await base.db.from("usage_events").insert({ user_id: base.user.id, kind: "segment" });
+  let id: string;
+  try {
+    id = await createSegmentFromDescription(business, description);
+  } catch (err) {
+    console.error("New buyer type failed", err);
+    return { error: "The agent couldn't create that buyer type just now. Please try again." };
+  }
+  revalidatePath(`/app/b/${businessId}`, "layout");
+  redirect(`/app/b/${businessId}/targeting/${id}`);
+}
+
+export async function updateSegmentBrief(businessId: string, segmentId: string, _: unknown, form: FormData): Promise<{ error?: string; message?: string }> {
+  const { db, segment } = await ownedSegment(businessId, segmentId);
+  const offer = String(form.get("offer") ?? "").trim();
+  const problem = String(form.get("customer_problem") ?? "").trim();
+  if (offer.length > 600 || problem.length > 600) return { error: "Keep each answer under 600 characters." };
+  await db.from("segments").update({ brief: { ...segment.brief, offer, customer_problem: problem } }).eq("id", segmentId);
+  revalidatePath(`/app/b/${businessId}`, "layout");
+  return { message: "Saved" };
+}
+
+const BRIEF_LISTS = ["example_clients", "positive_criteria", "negative_criteria"] as const;
+const FILTER_LISTS = ["person_titles", "person_locations", "organization_keywords"] as const;
+type ListField = (typeof BRIEF_LISTS)[number] | (typeof FILTER_LISTS)[number];
+
+function isListField(field: string): field is ListField {
+  return (BRIEF_LISTS as readonly string[]).includes(field) || (FILTER_LISTS as readonly string[]).includes(field);
+}
+
+async function editList(businessId: string, segmentId: string, field: string, edit: (list: string[]) => string[] | string) {
+  if (!isListField(field)) return { error: "Unknown field." };
+  const { db, segment } = await ownedSegment(businessId, segmentId);
+  const inBrief = (BRIEF_LISTS as readonly string[]).includes(field);
+  const current = (inBrief ? segment.brief[field as keyof SegmentBrief] : segment.filters[field as keyof SegmentFilters]) as string[] | undefined;
+  const next = edit(current ?? []);
+  if (typeof next === "string") return { error: next };
+  if (inBrief) {
+    await db.from("segments").update({ brief: { ...segment.brief, [field]: next } }).eq("id", segmentId);
+  } else {
+    // New targeting: search the contact database again from the start.
+    const status = segment.status === "exhausted" ? "testing" : segment.status;
+    await db.from("segments").update({ filters: { ...segment.filters, [field]: next }, apollo_page: 0, status }).eq("id", segmentId);
+  }
+  revalidatePath(`/app/b/${businessId}`, "layout");
+  return {};
+}
+
+export async function addSegmentItem(businessId: string, segmentId: string, field: string, _: unknown, form: FormData): Promise<{ error?: string }> {
+  const value = String(form.get("value") ?? "").trim().replace(/\s+/g, " ");
+  if (!value) return { error: "Type something to add." };
+  if (value.length > 80) return { error: "Keep it under 80 characters." };
+  return editList(businessId, segmentId, field, (list) =>
+    list.some((v) => v.toLowerCase() === value.toLowerCase()) ? "Already on the list." : list.length >= 20 ? "That list is full (20)." : [...list, value],
+  );
+}
+
+export async function removeSegmentItem(businessId: string, segmentId: string, field: string, value: string) {
+  await editList(businessId, segmentId, field, (list) => list.filter((v) => v !== value));
+}
+
+/** Hides the "Get started" checklist. */
+export async function dismissOnboarding() {
+  const { user, db } = await session();
+  await db.from("accounts").update({ onboarding_dismissed_at: new Date().toISOString() }).eq("user_id", user.id);
+  revalidatePath("/app", "layout");
 }
