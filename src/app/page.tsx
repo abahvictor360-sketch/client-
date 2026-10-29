@@ -96,8 +96,6 @@ const controls = [
   { icon: ShieldCheck, title: "Compliance built in", body: "Postal address, one-click unsubscribe and a do-not-contact list." },
 ];
 
-const stack = ["Claude", "Apollo.io", "Resend", "Stripe", "Supabase"];
-
 export default function Home() {
   return (
     <div className="min-h-dvh p-3">
@@ -151,20 +149,6 @@ export default function Home() {
               Verify a sending domain, paste your website, review the buyer types and press Start. No SDRs, no sequences
               to write.
             </p>
-            <p className="mt-10 text-sm text-muted">Built on</p>
-            <ul className="mx-auto mt-3 flex max-w-3xl flex-wrap items-center justify-center gap-2 sm:gap-4">
-              {stack.map((name, i) => (
-                <li
-                  key={name}
-                  translate="no"
-                  className={`rounded-2xl px-5 py-3 text-lg font-semibold tracking-tight ${
-                    i === 0 ? "bg-surface text-ink shadow-[var(--shadow-float)] ring-1 ring-line [box-shadow:var(--shadow-float),inset_0_-3px_0_var(--ink)]" : "text-muted"
-                  }`}
-                >
-                  {name}
-                </li>
-              ))}
-            </ul>
           </section>
 
           <section id="how" aria-labelledby="how-title" className="border-t border-line px-5 py-20">
