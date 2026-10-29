@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 function safeNext(value: FormDataEntryValue | null) {
   const next = typeof value === "string" ? value : "";
-  return next.startsWith("/app") ? next : "/app";
+  return next.startsWith("/app") || next.startsWith("/admin") ? next : "/app";
 }
 
 export async function signIn(_: unknown, form: FormData) {

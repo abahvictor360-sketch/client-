@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect("/login");
   const { data: account } = await supabase
     .from("accounts")
-    .select("credits_cents, trial_ends_at")
+    .select("credits_cents, trial_ends_at, is_admin")
     .eq("user_id", user.id)
     .single();
   const credits = account?.credits_cents ?? 0;
@@ -28,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <nav aria-label="App" className="flex flex-wrap items-center gap-1 text-sm">
             <NavLink href="/app" exact>Campaigns</NavLink>
             <NavLink href="/app/settings">Settings</NavLink>
+            {account?.is_admin && <NavLink href="/admin">Admin</NavLink>}
             <NavLink href="/app/billing">
               {trial.active ? (
                 <span>Trial: {trial.daysLeft} {trial.daysLeft === 1 ? "day" : "days"} left</span>

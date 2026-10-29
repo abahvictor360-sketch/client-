@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname, searchParams } = request.nextUrl;
-  const protectedPage = pathname.startsWith("/app") || pathname === "/reset-password";
+  const protectedPage = pathname.startsWith("/app") || pathname.startsWith("/admin") || pathname === "/reset-password";
   if (!user && protectedPage) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
@@ -44,12 +44,12 @@ export async function middleware(request: NextRequest) {
     if (website) target.searchParams.set("website", website);
     else if (about) target.searchParams.set("about", about);
     const next = searchParams.get("next");
-    if (next?.startsWith("/app")) return NextResponse.redirect(new URL(next, request.url));
+    if (next && (next.startsWith("/app") || next.startsWith("/admin"))) return NextResponse.redirect(new URL(next, request.url));
     return NextResponse.redirect(target);
   }
   return response;
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/login", "/signup", "/reset-password"],
+  matcher: ["/app/:path*", "/admin/:path*", "/admin", "/login", "/signup", "/reset-password"],
 };

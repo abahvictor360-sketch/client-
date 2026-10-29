@@ -19,6 +19,7 @@ export interface Account {
   meeting_link: string | null;
   credits_cents: number;
   trial_ends_at: string;
+  is_admin: boolean;
 }
 
 export interface Competitor {

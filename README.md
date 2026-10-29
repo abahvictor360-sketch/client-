@@ -31,10 +31,12 @@ Billing is pay as you go: $0.04 per email or AI reply, deducted from a credit ba
    - Enable inbound on a second subdomain (e.g. `in.acme.com`) and set it as `INBOUND_EMAIL_DOMAIN`. Replies go to `reply+<prospect-id>@in.acme.com`.
    - Add a webhook at `https://<app>/api/webhooks/resend` for `email.received`, `email.bounced` and `email.complained`, and copy its signing secret into `RESEND_WEBHOOK_SECRET`.
 3. **Apollo.** Use an API key on a plan that includes People Search and Enrichment.
-4. **Stripe (optional).** Add a webhook at `https://<app>/api/webhooks/stripe` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`.
-5. Copy `.env.example` to `.env.local`, fill it in, then run `npm install` and `npm run dev`.
-6. **Deploy.** Deploy to Vercel with the same environment variables.
-7. **Schedule the agent.** It should run every 10 minutes. On Vercel Pro, change the schedule in `vercel.json` to `*/10 * * * *`. On the free Hobby plan (daily crons only), add repository secrets `APP_URL` and `CRON_SECRET`, and `.github/workflows/agent-cron.yml` will call it every 10 minutes.
+4. **Flutterwave (credit top-ups).** Set `FLUTTERWAVE_SECRET_KEY`. In Flutterwave → Settings → Webhooks, set the URL to `https://<app>/api/webhooks/flutterwave`, choose a secret hash and put it in `FLUTTERWAVE_WEBHOOK_HASH`. To charge in naira, set `FLUTTERWAVE_CURRENCY=NGN` and `FLUTTERWAVE_USD_RATE` (naira per $1).
+5. **Admin.** Emails in the `admin_emails` table (seeded with the owner) get the Admin dashboard at `/admin`; admins can also promote other users from there.
+6. **Stripe (optional).** Add a webhook at `https://<app>/api/webhooks/stripe` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`.
+7. Copy `.env.example` to `.env.local`, fill it in, then run `npm install` and `npm run dev`.
+8. **Deploy.** Deploy to Vercel with the same environment variables.
+9. **Schedule the agent.** It should run every 10 minutes. On Vercel Pro, change the schedule in `vercel.json` to `*/10 * * * *`. On the free Hobby plan (daily crons only), add repository secrets `APP_URL` and `CRON_SECRET`, and `.github/workflows/agent-cron.yml` will call it every 10 minutes.
 
 In the app, fill in **Settings** (sender, sending address and postal address), paste a website, review the segments and click **Start agent**.
 
