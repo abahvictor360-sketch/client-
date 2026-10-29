@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { factsBlock } from "@/lib/agent/facts";
 import { generateObject } from "@/lib/claude";
 import type { Account, Business, Message, Prospect, Segment } from "@/lib/types";
 import { normalizeWebsite, readWebsite } from "@/lib/website";
@@ -59,7 +60,7 @@ export async function writeEmail(opts: {
 What we sell: ${business.summary}
 Offer: ${business.offer}
 Value props:
-${business.value_props.map((v) => `- ${v}`).join("\n")}
+${business.value_props.map((v) => `- ${v}`).join("\n")}${factsBlock(business.facts)}
 
 Target segment: ${segment.name} — ${segment.rationale ?? segment.description ?? ""}
 

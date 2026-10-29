@@ -21,12 +21,20 @@ export interface Account {
   trial_ends_at: string;
   is_admin: boolean;
   suspended: boolean;
+  heard_from: string | null;
 }
 
 export interface Competitor {
   name: string;
   domain: string;
   note: string;
+}
+
+/** Details the agent can quote when prospects ask (set in the setup steps). */
+export interface BusinessFacts {
+  pricing?: string;
+  capabilities?: string;
+  proof?: string;
 }
 
 export interface Business {
@@ -44,6 +52,8 @@ export interface Business {
   daily_budget_cents: number;
   max_emails_per_day: number;
   analysis_started_at: string;
+  confirmed_at: string | null;
+  facts: BusinessFacts;
   created_at: string;
 }
 

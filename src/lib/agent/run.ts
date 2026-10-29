@@ -60,8 +60,16 @@ export async function optimizeSegments(db: Db, businessId: string) {
   }
 }
 
+/** Which of these emails the business owner put on their do-not-contact list (by address or domain). */
+async function ownerBlocked(db: Db, userId: string, emails: string[]) {
+  if (!emails.length) return new Set<string>();
+  const { data } = await db.from("user_suppressions").select("value").eq("user_id", userId);
+  const values = new Set((data ?? []).map((r) => r.value as string));
+  return new Set(emails.filter((e) => values.has(e.toLowerCase()) || values.has(e.split("@")[1]?.toLowerCase() ?? "")));
+}
+
 /** Tops a segment up with verified prospects from Apollo. */
-async function sourceProspects(db: Db, segment: Segment, needed: number) {
+async function sourceProspects(db: Db, segment: Segment, userId: string, needed: number) {
   let page = segment.apollo_page;
   let added = 0;
   for (let attempt = 0; attempt < 4 && added < needed; attempt++) {
@@ -88,6 +96,7 @@ async function sourceProspects(db: Db, segment: Segment, needed: number) {
       .select("email")
       .in("email", enriched.map((p) => p.email));
     const blocked = new Set((suppressed ?? []).map((s) => s.email));
+    for (const email of await ownerBlocked(db, userId, enriched.map((p) => p.email))) blocked.add(email);
     const rows = enriched
       .filter((p) => !blocked.has(p.email))
       .map((p) => ({
@@ -136,6 +145,10 @@ async function sendStep(db: Db, ctx: { account: Account; business: Business; seg
   const { data: suppressed } = await db.from("suppressions").select("email").eq("email", prospect.email).maybeSingle();
   if (suppressed) {
     await db.from("prospects").update({ status: "unsubscribed", next_action_at: null }).eq("id", prospect.id);
+    return true;
+  }
+  if ((await ownerBlocked(db, ctx.business.user_id, [prospect.email])).size) {
+    await db.from("prospects").update({ status: "done", next_action_at: null }).eq("id", prospect.id);
     return true;
   }
 
@@ -271,7 +284,7 @@ export async function runBusiness(db: Db, business: Business) {
       .limit(share)
       .returns<Prospect[]>();
     if ((fresh?.length ?? 0) < share) {
-      await sourceProspects(db, segment, share * 3);
+      await sourceProspects(db, segment, business.user_id, share * 3);
       ({ data: fresh } = await db
         .from("prospects")
         .select("*")

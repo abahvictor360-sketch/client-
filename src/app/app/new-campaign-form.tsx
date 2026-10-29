@@ -74,7 +74,7 @@ export function NewCampaignForm({
       {state?.error ? (
         <p id={errorId} role="alert" className="mt-1.5 text-sm text-danger">{state.error}</p>
       ) : (
-        <p id={hintId} className="hint">We study your business and propose the customers to target. Nothing is sent until you review and press Start.</p>
+        <p id={hintId} className="hint">We study your business and propose the customers to target. Then you confirm a few setup steps; nothing is sent until you launch.</p>
       )}
     </form>
   );

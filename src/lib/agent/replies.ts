@@ -2,7 +2,9 @@ import { z } from "zod";
 import { charge, refund } from "@/lib/agent/billing";
 import { availableSlots, formatSlot, meetingInvite } from "@/lib/calendar";
 import { generateObject } from "@/lib/claude";
+import { factsBlock } from "@/lib/agent/facts";
 import { senderProblem } from "@/lib/domains";
+import { env } from "@/lib/env";
 import { notifyOwner, sendProspectEmail } from "@/lib/email";
 import { PRICE_PER_EMAIL_CENTS } from "@/lib/pricing";
 import { adminClient } from "@/lib/supabase/admin";
@@ -135,7 +137,7 @@ export async function handleInboundReply(opts: {
 Business profile: ${business.summary}
 Offer: ${business.offer}
 Value props:
-${business.value_props.map((v) => `- ${v}`).join("\n")}
+${business.value_props.map((v) => `- ${v}`).join("\n")}${factsBlock(business.facts)}
 Meeting link: ${account.meeting_link ?? "none"}
 
 Available slots (${account.timezone}):
@@ -182,7 +184,7 @@ ${history}
   const slot = decision.intent === "meeting_confirm" ? slots[decision.chosen_slot] : undefined;
   if (!decision.reply.trim() && !slot) {
     if (positive && owner) {
-      await notifyOwner(account, owner, `Reply from ${prospect.email}`, `${decision.summary}\n\n${opts.text}`);
+      await notifyOwner(account, owner, `Reply from ${prospect.email}`, `${decision.summary}\n\nOpen the conversation: ${env.appUrl()}/app/b/${business.id}/inbox?p=${prospect.id}\n\n${opts.text}`);
     }
     return;
   }
