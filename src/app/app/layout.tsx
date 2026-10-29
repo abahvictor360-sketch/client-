@@ -39,20 +39,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         isAdmin={Boolean(account?.is_admin)}
         plan={trial.active ? `Free trial · ${trial.daysLeft} ${trial.daysLeft === 1 ? "day" : "days"} left` : `Balance ${formatUsd(credits)}`}
       />
-      <div className="min-w-0 flex-1 lg:p-3 lg:pl-0">
-        <div className="min-h-full bg-canvas lg:min-h-[calc(100dvh-1.5rem)] lg:rounded-[28px] lg:ring-1 lg:ring-line">
+      <div className="min-w-0 flex-1">
+        <div className="min-h-full bg-canvas lg:min-h-dvh lg:border-l lg:border-line">
           {account?.suspended && (
             <p role="alert" className="border-b border-line px-5 py-2.5 text-center text-sm text-danger">
               Your account is suspended, so the agent isn&apos;t sending. Contact support if you think this is a mistake.
             </p>
           )}
           {!account?.suspended && !trial.active && credits <= 0 && (
-            <p role="status" className="border-b border-line bg-dawn-soft px-5 py-2.5 text-center text-sm text-dawn-ink lg:rounded-t-[28px]">
+            <p role="status" className="border-b border-line bg-dawn-soft px-5 py-2.5 text-center text-sm text-dawn-ink">
               Your free trial has ended, so the agent has stopped sending.{" "}
               <a href="/app/billing" className="font-semibold underline">Top up</a>
             </p>
           )}
-          <main id="main" className="mx-auto max-w-6xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-8 sm:pt-10 lg:pb-10">{children}</main>
+          <main id="main" className="mx-auto max-w-screen-2xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-8 sm:pt-10 lg:px-10 lg:pb-10">{children}</main>
         </div>
       </div>
     </div>

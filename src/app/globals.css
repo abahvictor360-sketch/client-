@@ -162,20 +162,9 @@ button:not(:disabled), [role="button"] {
   .data-table tr:last-child td {
     @apply border-b-0;
   }
-  /* The framed canvas the whole site sits in, with faint guide lines at the content edges. */
+  /* The full-width canvas the site sits in. */
   .frame {
-    @apply relative mx-auto min-h-[calc(100dvh-1.5rem)] max-w-[1280px] overflow-hidden rounded-[32px] border-[6px] border-white bg-canvas shadow-[0_2px_4px_rgba(24,24,27,0.04),0_30px_60px_-30px_rgba(24,24,27,0.25)] dark:border-white/5;
-  }
-  .frame::before,
-  .frame::after {
-    content: "";
-    @apply pointer-events-none absolute inset-y-0 hidden w-px bg-line/70 lg:block;
-  }
-  .frame::before {
-    left: 3.5rem;
-  }
-  .frame::after {
-    right: 3.5rem;
+    @apply relative min-h-dvh w-full overflow-hidden bg-canvas;
   }
 }
 

@@ -2,7 +2,7 @@ import { Logo } from "@/components/logo";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-dvh p-3">
+    <div className="min-h-dvh">
       <div className="frame flex flex-col">
         <header className="flex justify-center px-3 pt-6">
           <div className="rounded-2xl bg-surface px-4 py-0.5 shadow-[var(--shadow-float)] ring-1 ring-line">
