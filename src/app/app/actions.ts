@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { analyzeBusiness } from "@/lib/agent/analyze";
 import { missingSenderFields } from "@/lib/email";
+import { trialStatus } from "@/lib/pricing";
 import { requireUser } from "@/lib/supabase/server";
 import type { Account } from "@/lib/types";
 import { normalizeWebsite } from "@/lib/website";
@@ -64,7 +65,9 @@ export async function setBusinessRunning(id: string, running: boolean) {
     const { data: account } = await supabase.from("accounts").select("*").eq("user_id", user.id).single<Account>();
     const missing = account ? missingSenderFields(account) : ["account"];
     if (missing.length) return { error: `Add your ${missing.join(", ")} in Settings before starting.` };
-    if ((account?.credits_cents ?? 0) <= 0) return { error: "Add credits before starting." };
+    if (!trialStatus(account?.trial_ends_at).active && (account?.credits_cents ?? 0) <= 0) {
+      return { error: "Your free trial has ended. Add credits to keep the agent running." };
+    }
   }
   await supabase.from("businesses").update({ status: running ? "running" : "paused" }).eq("id", id);
   revalidatePath(`/app/b/${id}`);

@@ -2,14 +2,19 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/app/(auth)/actions";
 import { Logo } from "@/components/logo";
 import { NavLink } from "@/components/nav-link";
-import { formatUsd } from "@/lib/pricing";
+import { formatUsd, trialStatus } from "@/lib/pricing";
 import { requireUser } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user } = await requireUser();
   if (!user) redirect("/login");
-  const { data: account } = await supabase.from("accounts").select("credits_cents").eq("user_id", user.id).single();
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("credits_cents, trial_ends_at")
+    .eq("user_id", user.id)
+    .single();
   const credits = account?.credits_cents ?? 0;
+  const trial = trialStatus(account?.trial_ends_at);
 
   return (
     <div className="min-h-dvh p-3">
@@ -24,8 +29,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <NavLink href="/app" exact>Campaigns</NavLink>
             <NavLink href="/app/settings">Settings</NavLink>
             <NavLink href="/app/billing">
-              <span className="tabular-nums">{formatUsd(credits)}</span>
-              <span className="sr-only">credits left</span>
+              {trial.active ? (
+                <span>Trial: {trial.daysLeft} {trial.daysLeft === 1 ? "day" : "days"} left</span>
+              ) : (
+                <>
+                  <span className="tabular-nums">{formatUsd(credits)}</span>
+                  <span className="sr-only">credits left</span>
+                </>
+              )}
             </NavLink>
             <form action={signOut}>
               <button className="btn-quiet">Sign out</button>
@@ -33,9 +44,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
       </header>
-      {credits <= 0 && (
+      {!trial.active && credits <= 0 && (
         <p role="status" className="mx-auto mt-3 w-fit max-w-[calc(100%-1.5rem)] rounded-full bg-dawn-soft px-4 py-2 text-center text-sm text-dawn-ink">
-          You&apos;re out of credits, so the agent has stopped sending.{" "}
+          Your free trial has ended, so the agent has stopped sending.{" "}
           <a href="/app/billing" className="font-semibold underline">Add credits</a>
         </p>
       )}

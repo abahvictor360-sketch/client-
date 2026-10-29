@@ -140,7 +140,8 @@ async function sendStep(db: Db, ctx: { account: Account; business: Business; seg
 
   // One charge per claim; a failed attempt is refunded and a later claim retries.
   const ref = `email:${prospect.id}:${step}:${claimedAt}`;
-  if ((await charge(ctx.business.user_id, PRICE_PER_EMAIL_CENTS, "email", ref)) !== "ok") {
+  const charged = await charge(ctx.business.user_id, PRICE_PER_EMAIL_CENTS, "email", ref);
+  if (charged !== "ok" && charged !== "trial") {
     await db.from("prospects").update({ next_action_at: step === 0 ? null : new Date().toISOString() }).eq("id", prospect.id);
     return false;
   }
@@ -181,7 +182,7 @@ async function sendStep(db: Db, ctx: { account: Account; business: Business; seg
       p_spend_cents: PRICE_PER_EMAIL_CENTS,
     });
   } catch (err) {
-    await refund(ctx.business.user_id, PRICE_PER_EMAIL_CENTS, "refund_failed_email", ref);
+    if (charged === "ok") await refund(ctx.business.user_id, PRICE_PER_EMAIL_CENTS, "refund_failed_email", ref);
     await db
       .from("prospects")
       .update({ next_action_at: new Date(Date.now() + 6 * 3_600_000).toISOString() })

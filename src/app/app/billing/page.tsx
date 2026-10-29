@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { formatUsd, PRICE_PER_EMAIL_CENTS, TOP_UP_OPTIONS_CENTS } from "@/lib/pricing";
+import { formatUsd, PRICE_PER_EMAIL_CENTS, TOP_UP_OPTIONS_CENTS, trialStatus } from "@/lib/pricing";
 import { stripeClient } from "@/lib/stripe";
 import { requireUser } from "@/lib/supabase/server";
 
@@ -7,6 +7,8 @@ export const metadata = { title: "Billing" };
 
 const REASONS: Record<string, string> = {
   signup_bonus: "Free signup credits",
+  trial_email: "Email sent (free trial)",
+  trial_ai_reply: "Reply sent (free trial)",
   top_up: "Credits added",
   email: "Email sent",
   ai_reply: "Reply sent",
@@ -18,7 +20,12 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const { paid } = await searchParams;
   const { supabase, user } = await requireUser();
   if (!user) redirect("/login");
-  const { data: account } = await supabase.from("accounts").select("credits_cents").eq("user_id", user.id).single();
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("credits_cents, trial_ends_at")
+    .eq("user_id", user.id)
+    .single();
+  const trial = trialStatus(account?.trial_ends_at);
   const { data: ledger } = await supabase
     .from("credit_ledger")
     .select("id, amount_cents, reason, created_at")
@@ -41,6 +48,23 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       )}
 
       <section className="panel p-6 sm:p-8">
+        {trial.active ? (
+          <div className="mb-6 rounded-[var(--radius-control)] bg-teal-soft p-4 text-sm text-teal-ink">
+            <p className="font-semibold">
+              Free trial: {trial.daysLeft} {trial.daysLeft === 1 ? "day" : "days"} left
+            </p>
+            <p className="mt-0.5">
+              Everything the agent sends is free until{" "}
+              {trial.endsAt.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })} UTC. No card
+              or subscription needed. Add credits any time to keep it running afterwards.
+            </p>
+          </div>
+        ) : (
+          <div className="mb-6 rounded-[var(--radius-control)] bg-surface-2 p-4 text-sm">
+            <p className="font-semibold">Your free trial has ended</p>
+            <p className="mt-0.5 text-muted">The agent now uses credits. There&apos;s still no subscription: you only pay per email.</p>
+          </div>
+        )}
         <p className="text-sm text-muted">Balance</p>
         <p className="mt-1 font-display text-5xl font-semibold tabular-nums">{formatUsd(balance)}</p>
         <p className="mt-1 text-sm text-muted">

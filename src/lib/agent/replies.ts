@@ -189,7 +189,7 @@ ${history}
   if (charged === "duplicate") return;
   if (charged === "insufficient") {
     if (owner) {
-      await notifyOwner(account, owner, `Out of credits — reply waiting from ${prospect.email}`, opts.text);
+      await notifyOwner(account, owner, `Trial ended — reply waiting from ${prospect.email}`, `Add credits so the agent can answer.\n\n${opts.text}`);
     }
     return;
   }
@@ -246,7 +246,7 @@ ${history}
     });
     await db.rpc("bump_segment", { p_segment_id: prospect.segment_id, p_spend_cents: PRICE_PER_EMAIL_CENTS });
   } catch (err) {
-    await refund(business.user_id, PRICE_PER_EMAIL_CENTS, "refund_failed_reply", ref);
+    if (charged === "ok") await refund(business.user_id, PRICE_PER_EMAIL_CENTS, "refund_failed_reply", ref);
     if (meetingId) await db.from("meetings").delete().eq("id", meetingId);
     throw err;
   }

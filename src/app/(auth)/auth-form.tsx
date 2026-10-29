@@ -34,7 +34,7 @@ export function AuthForm({
         ) : about ? (
           <p className="mt-2 text-muted">Next, the agent works out who buys what you described.</p>
         ) : (
-          <p className="mt-2 text-muted">{signup ? "It takes about a minute." : "Sign in to check on your agent."}</p>
+          <p className="mt-2 text-muted">{signup ? "Free for 3 days. No card, no subscription." : "Sign in to check on your agent."}</p>
         )}
       </div>
       <input type="hidden" name="website" value={website ?? ""} />

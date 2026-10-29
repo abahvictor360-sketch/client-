@@ -3,7 +3,7 @@ import { Logo } from "@/components/logo";
 import { HeroStart } from "@/components/hero-start";
 import { SiteHeader } from "@/components/site-header";
 import { WebsiteForm } from "@/components/website-form";
-import { formatUsd, PRICE_PER_EMAIL_CENTS, SIGNUP_CREDITS_CENTS } from "@/lib/pricing";
+import { formatUsd, PRICE_PER_EMAIL_CENTS, TRIAL_DAYS } from "@/lib/pricing";
 import { PricingEstimator } from "./pricing-estimator";
 
 function OfferCard() {
@@ -132,7 +132,7 @@ export default function Home() {
             </p>
             <div className="rise [animation-delay:240ms]">
               <HeroStart />
-              <p className="hint">Includes {formatUsd(SIGNUP_CREDITS_CENTS)} of free credits. No card needed.</p>
+              <p className="hint">Free for {TRIAL_DAYS} days. No card, no subscription.</p>
             </div>
 
             <div className="mx-auto mt-16 grid max-w-5xl gap-5 text-left sm:grid-cols-3 sm:gap-6">
@@ -218,7 +218,7 @@ export default function Home() {
                 </h2>
                 <p className="mt-4 max-w-md text-lg text-muted">
                   Research, writing, follow-ups and AI replies are included. No subscription, no seats, and your first{" "}
-                  {formatUsd(SIGNUP_CREDITS_CENTS)} is on us.
+                  {TRIAL_DAYS} days are free without a card.
                 </p>
               </div>
               <PricingEstimator pricePerEmailCents={PRICE_PER_EMAIL_CENTS} />

@@ -18,6 +18,7 @@ export interface Account {
   meeting_minutes: number;
   meeting_link: string | null;
   credits_cents: number;
+  trial_ends_at: string;
 }
 
 export interface Competitor {
