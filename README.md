@@ -20,7 +20,7 @@ Billing is pay as you go: $0.04 per email or AI reply, deducted from a credit ba
 | AI | Claude (`claude-opus-5-5`) with structured outputs, refusal fallbacks and web search |
 | Prospects | Apollo.io People API Search + Bulk People Enrichment |
 | Email | Resend: sending, inbound replies and bounce/complaint webhooks |
-| Scheduler | Vercel Cron hits `/api/cron/agent` every 10 minutes |
+| Scheduler | `/api/cron/agent` every 10 minutes (GitHub Actions on Vercel Hobby, Vercel Cron on Pro) |
 | Payments | Stripe Checkout (optional) |
 
 ## Setup
@@ -33,7 +33,8 @@ Billing is pay as you go: $0.04 per email or AI reply, deducted from a credit ba
 3. **Apollo.** Use an API key on a plan that includes People Search and Enrichment.
 4. **Stripe (optional).** Add a webhook at `https://<app>/api/webhooks/stripe` for `checkout.session.completed` and `checkout.session.async_payment_succeeded`.
 5. Copy `.env.example` to `.env.local`, fill it in, then run `npm install` and `npm run dev`.
-6. **Deploy.** Deploy to Vercel with the same environment variables. `vercel.json` registers the cron job, and Vercel sends `CRON_SECRET` automatically.
+6. **Deploy.** Deploy to Vercel with the same environment variables.
+7. **Schedule the agent.** It should run every 10 minutes. On Vercel Pro, change the schedule in `vercel.json` to `*/10 * * * *`. On the free Hobby plan (daily crons only), add repository secrets `APP_URL` and `CRON_SECRET`, and `.github/workflows/agent-cron.yml` will call it every 10 minutes.
 
 In the app, fill in **Settings** (sender, sending address and postal address), paste a website, review the segments and click **Start agent**.
 

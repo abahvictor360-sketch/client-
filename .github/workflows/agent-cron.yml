@@ -1,0 +1,27 @@
+# Runs the outbound agent every 10 minutes. Vercel's Hobby plan only allows
+# daily cron jobs, so this calls the same endpoint from GitHub instead.
+# Needs repository secrets APP_URL (e.g. https://leadloop.vercel.app) and CRON_SECRET.
+name: Agent tick
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Call the agent
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "APP_URL or CRON_SECRET is not set; skipping."
+            exit 0
+          fi
+          curl --fail-with-body --max-time 320 -sS \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_URL/api/cron/agent"
