@@ -1,6 +1,8 @@
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusPill } from "@/components/status-pill";
+import { SubmitButton } from "@/components/submit-button";
 import { formatUsd } from "@/lib/pricing";
 import { requireUser } from "@/lib/supabase/server";
 import type { Business, Meeting, Message, Prospect, Segment } from "@/lib/types";
@@ -9,19 +11,25 @@ import { AutoRefresh, RunControls } from "./controls";
 
 export const maxDuration = 300;
 
-const TABS = ["overview", "prospects", "inbox", "meetings"] as const;
-type Tab = (typeof TABS)[number];
+const TABS = [
+  { id: "overview", label: "Buyer types" },
+  { id: "prospects", label: "People" },
+  { id: "inbox", label: "Conversations" },
+  { id: "meetings", label: "Meetings" },
+] as const;
+type Tab = (typeof TABS)[number]["id"];
+
+const dateTime = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
 
 function personName(p: Pick<Prospect, "first_name" | "last_name" | "email">) {
   return `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || p.email;
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function EmptyRow({ colSpan, children }: { colSpan: number; children: React.ReactNode }) {
   return (
-    <div className="card p-4">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-1 text-2xl font-medium">{value}</p>
-    </div>
+    <tr>
+      <td colSpan={colSpan} className="!py-12 text-center text-muted">{children}</td>
+    </tr>
   );
 }
 
@@ -34,7 +42,7 @@ export default async function BusinessPage({
 }) {
   const { id } = await params;
   const { tab: rawTab, p: selectedProspect } = await searchParams;
-  const tab: Tab = TABS.includes(rawTab as Tab) ? (rawTab as Tab) : "overview";
+  const tab: Tab = TABS.some((t) => t.id === rawTab) ? (rawTab as Tab) : "overview";
   const { supabase } = await requireUser();
 
   const { data: business } = await supabase.from("businesses").select("*").eq("id", id).single<Business>();
@@ -57,146 +65,176 @@ export default async function BusinessPage({
     { sent: 0, replies: 0, positive: 0, meetings: 0, spend: 0 },
   );
   const segmentName = new Map((segments ?? []).map((s) => [s.id, s.name]));
+  const host = new URL(business.website).hostname;
+
+  const stats = [
+    { label: "Emails sent", value: totals.sent.toLocaleString("en-US") },
+    { label: "Replies", value: totals.replies.toLocaleString("en-US") },
+    { label: "Warm leads", value: totals.positive.toLocaleString("en-US") },
+    { label: "Meetings booked", value: totals.meetings.toLocaleString("en-US"), highlight: totals.meetings > 0 },
+    { label: "Cost per warm lead", value: totals.positive ? formatUsd(totals.spend / totals.positive) : "–" },
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AutoRefresh active={business.status === "analyzing"} />
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <h1 className="truncate text-2xl font-medium tracking-tight">
-              {business.name ?? new URL(business.website).hostname}
-            </h1>
-            <StatusPill status={business.status} />
+      <div>
+        <Link href="/app" className="btn-quiet -ml-3">
+          <ChevronLeft size={16} aria-hidden="true" />
+          Campaigns
+        </Link>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl sm:text-4xl">{business.name ?? host}</h1>
+              <StatusPill status={business.status} />
+            </div>
+            <a href={business.website} target="_blank" rel="noreferrer" className="mt-1 inline-block text-sm text-muted underline underline-offset-4" translate="no">
+              {host}
+            </a>
           </div>
-          <a href={business.website} target="_blank" rel="noreferrer" className="text-sm text-muted underline">
-            {business.website}
-          </a>
+          <RunControls id={business.id} status={business.status} />
         </div>
-        <RunControls id={business.id} status={business.status} />
       </div>
 
       {business.status === "analyzing" && (
-        <div className="card p-6">
-          <p className="font-medium">The agent is studying your website and competitors…</p>
-          <p className="mt-1 text-sm text-muted">This usually takes a minute or two. The page updates on its own.</p>
+        <div role="status" className="panel flex items-start gap-4 p-6">
+          <span className="mt-1.5 h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-dawn motion-reduce:animate-none" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">Reading {host} and researching competitors…</p>
+            <p className="mt-1 text-sm text-muted">This usually takes one to two minutes. The page updates by itself.</p>
+          </div>
         </div>
       )}
       {business.status === "failed" && (
-        <div className="card border-danger p-6">
-          <p className="font-medium text-danger">Analysis failed</p>
+        <div role="alert" className="panel border-danger/40 p-6">
+          <p className="font-semibold text-danger">The analysis didn&apos;t finish</p>
           <p className="mt-1 text-sm text-muted">{business.error}</p>
+          <p className="mt-2 text-sm">Check that the website loads in a browser, then choose Analyze again.</p>
+        </div>
+      )}
+      {business.status === "ready" && (
+        <div className="rounded-[var(--radius-panel)] bg-dawn-soft p-5 text-sm text-dawn-ink">
+          Review the buyer types below and pause any you don&apos;t want. When it looks right, choose Start agent.
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <Stat label="Emails sent" value={totals.sent} />
-        <Stat label="Replies" value={totals.replies} />
-        <Stat label="Warm leads" value={totals.positive} />
-        <Stat label="Meetings" value={totals.meetings} />
-        <Stat label="Cost / lead" value={totals.positive ? formatUsd(totals.spend / totals.positive) : "—"} />
-      </div>
-
-      <nav className="flex gap-1 overflow-x-auto border-b border-line">
-        {TABS.map((t) => (
-          <Link
-            key={t}
-            href={`/app/b/${id}?tab=${t}`}
-            className={`border-b-2 px-3 py-2 text-sm capitalize ${t === tab ? "border-fg font-medium" : "border-transparent text-muted"}`}
-          >
-            {t}
-          </Link>
+      <dl className="grid grid-cols-2 overflow-hidden rounded-[var(--radius-panel)] border border-line bg-line [gap:1px] sm:grid-cols-5">
+        {stats.map((s) => (
+          <div key={s.label} className={`p-4 sm:p-5 ${s.highlight ? "bg-dawn-soft" : "bg-surface"}`}>
+            <dt className="text-sm text-muted">{s.label}</dt>
+            <dd className="mt-1 font-display text-2xl font-semibold tabular-nums sm:text-3xl">{s.value}</dd>
+          </div>
         ))}
+      </dl>
+
+      <nav aria-label="Campaign sections" className="-mx-4 overflow-x-auto px-4">
+        <ul className="flex min-w-max gap-1 border-b border-line">
+          {TABS.map((t) => (
+            <li key={t.id}>
+              <Link
+                href={`/app/b/${id}?tab=${t.id}`}
+                aria-current={t.id === tab ? "page" : undefined}
+                className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-3 text-sm transition-colors ${
+                  t.id === tab ? "border-ink font-semibold text-ink" : "border-transparent text-muted hover:text-ink"
+                }`}
+              >
+                {t.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </nav>
 
       {tab === "overview" && (
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
-            <section className="card overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-left text-xs uppercase text-muted">
-                  <tr className="border-b border-line">
-                    <th className="px-4 py-3">Segment</th>
-                    <th className="px-4 py-3">Fit</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Sent</th>
-                    <th className="px-4 py-3 text-right">Warm</th>
-                    <th className="px-4 py-3 text-right">Cost/lead</th>
-                    <th className="px-4 py-3" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {(segments ?? []).map((s) => (
-                    <tr key={s.id} className="border-b border-line align-top last:border-0">
-                      <td className="px-4 py-3">
-                        <p className="font-medium">{s.name}</p>
-                        <p className="mt-0.5 max-w-sm text-muted">{s.rationale}</p>
-                      </td>
-                      <td className="px-4 py-3">{s.fit_score}%</td>
-                      <td className="px-4 py-3"><StatusPill status={s.status} /></td>
-                      <td className="px-4 py-3 text-right">{s.sent}</td>
-                      <td className="px-4 py-3 text-right">{s.positive_replies}</td>
-                      <td className="px-4 py-3 text-right">
-                        {s.positive_replies ? formatUsd(s.spend_cents / s.positive_replies) : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right">
+        <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+          <section aria-label="Buyer types" className="panel overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Buyer type</th>
+                  <th scope="col">Fit</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" className="!text-right">Sent</th>
+                  <th scope="col" className="!text-right">Warm</th>
+                  <th scope="col" className="!text-right">Per lead</th>
+                  <th scope="col"><span className="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(segments ?? []).map((s) => (
+                  <tr key={s.id}>
+                    <td className="min-w-56">
+                      <p className="font-semibold">{s.name}</p>
+                      <p className="mt-0.5 max-w-md text-muted">{s.rationale}</p>
+                    </td>
+                    <td>{s.fit_score}%</td>
+                    <td><StatusPill status={s.status} /></td>
+                    <td className="text-right">{s.sent}</td>
+                    <td className="text-right">{s.positive_replies}</td>
+                    <td className="text-right">{s.positive_replies ? formatUsd(s.spend_cents / s.positive_replies) : "–"}</td>
+                    <td className="text-right">
+                      {s.status !== "exhausted" && (
                         <form action={setSegmentStatus.bind(null, id, s.id, s.status === "paused" ? "testing" : "paused")}>
-                          <button className="text-muted underline hover:text-fg">
+                          <button className="btn-quiet !min-h-9" aria-label={`${s.status === "paused" ? "Resume" : "Pause"} ${s.name}`}>
                             {s.status === "paused" ? "Resume" : "Pause"}
                           </button>
                         </form>
-                      </td>
-                    </tr>
-                  ))}
-                  {!segments?.length && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-muted">
-                        Segments appear here once the analysis finishes.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </section>
-          </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {!segments?.length && (
+                  <EmptyRow colSpan={7}>
+                    {business.status === "analyzing"
+                      ? "Buyer types appear here when the analysis finishes."
+                      : "No buyer types yet. Choose Analyze again to generate them."}
+                  </EmptyRow>
+                )}
+              </tbody>
+            </table>
+          </section>
 
           <aside className="space-y-6">
             {business.summary && (
-              <section className="card space-y-3 p-5 text-sm">
-                <h2 className="font-medium">What you sell</h2>
+              <section className="panel space-y-3 p-5 text-sm">
+                <h2 className="text-lg">What the agent will pitch</h2>
                 <p className="text-muted">{business.summary}</p>
-                <p><span className="text-muted">Offer:</span> {business.offer}</p>
+                <p><span className="font-semibold">Offer:</span> {business.offer}</p>
                 <ul className="list-disc space-y-1 pl-5 text-muted">
                   {business.value_props.map((v) => <li key={v}>{v}</li>)}
                 </ul>
               </section>
             )}
             {business.competitors.length > 0 && (
-              <section className="card space-y-2 p-5 text-sm">
-                <h2 className="font-medium">Competitors studied</h2>
-                {business.competitors.map((c) => (
-                  <div key={c.domain}>
-                    <p>✓ {c.name} <span className="text-muted">({c.domain})</span></p>
-                    <p className="text-muted">{c.note}</p>
-                  </div>
-                ))}
+              <section className="panel space-y-3 p-5 text-sm">
+                <h2 className="text-lg">Competitors it studied</h2>
+                <ul className="space-y-3">
+                  {business.competitors.map((c) => (
+                    <li key={c.domain}>
+                      <p className="font-semibold">{c.name} <span className="font-normal text-muted" translate="no">{c.domain}</span></p>
+                      <p className="text-muted">{c.note}</p>
+                    </li>
+                  ))}
+                </ul>
               </section>
             )}
-            <section className="card p-5 text-sm">
-              <h2 className="font-medium">Limits</h2>
-              <form action={updateBusinessLimits.bind(null, id)} className="mt-3 space-y-3">
+            <section className="panel p-5 text-sm">
+              <h2 className="text-lg">Spending limits</h2>
+              <form action={updateBusinessLimits.bind(null, id)} className="mt-4 space-y-4">
                 <div>
-                  <label className="label" htmlFor="daily_budget">Daily budget (USD)</label>
-                  <input className="input" id="daily_budget" name="daily_budget" type="number" min={0} step="0.5"
-                    defaultValue={business.daily_budget_cents / 100} />
+                  <label className="label" htmlFor="daily_budget">Daily budget in USD</label>
+                  <input className="input tabular-nums" id="daily_budget" name="daily_budget" type="number" min={0} step="0.5"
+                    inputMode="decimal" autoComplete="off" defaultValue={business.daily_budget_cents / 100} />
                 </div>
                 <div>
-                  <label className="label" htmlFor="max_emails_per_day">Max emails per day</label>
-                  <input className="input" id="max_emails_per_day" name="max_emails_per_day" type="number" min={0} max={500}
-                    defaultValue={business.max_emails_per_day} />
+                  <label className="label" htmlFor="max_emails_per_day">Most emails per day</label>
+                  <input className="input tabular-nums" id="max_emails_per_day" name="max_emails_per_day" type="number" min={0} max={500}
+                    inputMode="numeric" autoComplete="off" defaultValue={business.max_emails_per_day} aria-describedby="max-hint" />
+                  <p id="max-hint" className="hint">New domains should start under 50 a day.</p>
                 </div>
-                <button className="btn-secondary w-full">Save limits</button>
+                <SubmitButton variant="secondary" pendingLabel="Saving…" className="w-full">Save limits</SubmitButton>
               </form>
             </section>
           </aside>
@@ -221,39 +259,35 @@ async function ProspectsTab({ businessId, segmentName }: { businessId: string; s
     .returns<Prospect[]>();
 
   return (
-    <section className="card overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase text-muted">
-          <tr className="border-b border-line">
-            <th className="px-4 py-3">Person</th>
-            <th className="px-4 py-3">Company</th>
-            <th className="px-4 py-3">Segment</th>
-            <th className="px-4 py-3">Status</th>
+    <section aria-label="People" className="panel overflow-x-auto">
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Person</th>
+            <th scope="col">Company</th>
+            <th scope="col">Buyer type</th>
+            <th scope="col">Status</th>
           </tr>
         </thead>
         <tbody>
           {(prospects ?? []).map((p) => (
-            <tr key={p.id} className="border-b border-line last:border-0">
-              <td className="px-4 py-3">
-                <Link href={`/app/b/${businessId}?tab=inbox&p=${p.id}`} className="font-medium hover:underline">
+            <tr key={p.id}>
+              <td className="min-w-48">
+                <Link href={`/app/b/${businessId}?tab=inbox&p=${p.id}`} className="font-semibold underline-offset-4 hover:underline">
                   {personName(p)}
                 </Link>
                 <p className="text-muted">{p.title}</p>
               </td>
-              <td className="px-4 py-3">
+              <td className="min-w-48">
                 <p>{p.company}</p>
-                <p className="text-muted">{p.email}</p>
+                <p className="text-muted [overflow-wrap:anywhere]">{p.email}</p>
               </td>
-              <td className="px-4 py-3 text-muted">{segmentName.get(p.segment_id)}</td>
-              <td className="px-4 py-3"><StatusPill status={p.status} /></td>
+              <td className="text-muted">{segmentName.get(p.segment_id)}</td>
+              <td><StatusPill status={p.status} /></td>
             </tr>
           ))}
           {!prospects?.length && (
-            <tr>
-              <td colSpan={4} className="px-4 py-8 text-center text-muted">
-                No prospects yet. Start the agent and it will find them.
-              </td>
-            </tr>
+            <EmptyRow colSpan={4}>No one yet. Once you start the agent, the people it finds appear here.</EmptyRow>
           )}
         </tbody>
       </table>
@@ -296,41 +330,51 @@ async function InboxTab({ businessId, selected }: { businessId: string; selected
         .returns<Message[]>()
     : { data: [] as Message[] };
 
+  if (!list.length) {
+    return (
+      <div className="panel p-12 text-center">
+        <p className="font-semibold">No conversations yet</p>
+        <p className="mt-1 text-muted">Every email the agent sends, and every reply it handles, will show up here.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <section className="card max-h-[70vh] overflow-y-auto">
-        {list.map((c) => (
-          <Link
-            key={c.prospect_id}
-            href={`/app/b/${businessId}?tab=inbox&p=${c.prospect_id}`}
-            className={`block border-b border-line px-4 py-3 text-sm last:border-0 ${c.prospect_id === activeId ? "bg-surface-2" : ""}`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <p className="truncate font-medium">{c.prospects ? personName(c.prospects) : "Unknown"}</p>
-              {c.hasReply && <span className="h-2 w-2 shrink-0 rounded-full bg-accent" />}
-            </div>
-            <p className="truncate text-muted">{c.prospects?.company}</p>
-          </Link>
-        ))}
-        {!list.length && <p className="p-6 text-center text-sm text-muted">No conversations yet.</p>}
-      </section>
-      <section className="card space-y-4 p-5 lg:col-span-2">
+    <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
+      <nav aria-label="Conversations" className="panel max-h-[70vh] overflow-y-auto overscroll-contain">
+        <ul>
+          {list.map((c) => (
+            <li key={c.prospect_id} className="border-b border-line last:border-0">
+              <Link
+                href={`/app/b/${businessId}?tab=inbox&p=${c.prospect_id}`}
+                aria-current={c.prospect_id === activeId ? "true" : undefined}
+                className={`block px-4 py-3 text-sm transition-colors hover:bg-surface-2 ${c.prospect_id === activeId ? "bg-surface-2" : ""}`}
+              >
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate font-semibold">{c.prospects ? personName(c.prospects) : "Unknown"}</span>
+                  {c.hasReply && <span className="pill bg-success-soft text-success">Replied</span>}
+                </span>
+                <span className="block truncate text-muted">{c.prospects?.company}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <section aria-label="Conversation" className="panel space-y-4 p-4 sm:p-6">
         {(thread ?? []).map((m) => (
-          <div
+          <article
             key={m.id}
-            className={`max-w-[90%] rounded-xl p-4 text-sm ${m.direction === "inbound" ? "bg-surface-2" : "ml-auto bg-accent-soft"}`}
+            className={`max-w-[92%] rounded-2xl p-4 text-sm ${m.direction === "inbound" ? "rounded-bl-sm bg-surface-2" : "ml-auto rounded-br-sm bg-paper ring-1 ring-line"}`}
           >
-            <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted">
-              <span>{m.direction === "inbound" ? "They wrote" : "Agent sent"}</span>
-              <span>·</span>
-              <span>{new Date(m.created_at).toLocaleString()}</span>
+            <header className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+              <span className="font-semibold text-ink">{m.direction === "inbound" ? "They replied" : "Agent sent"}</span>
+              <time dateTime={m.created_at} className="tabular-nums">{dateTime.format(new Date(m.created_at))}</time>
               {m.intent && <StatusPill status={m.intent} />}
-            </div>
-            {m.subject && <p className="mb-1 font-medium">{m.subject}</p>}
-            <p className="whitespace-pre-wrap">{m.body}</p>
-          </div>
+            </header>
+            {m.subject && <p className="mb-1 font-semibold">{m.subject}</p>}
+            <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.body}</p>
+          </article>
         ))}
-        {!thread?.length && <p className="text-center text-sm text-muted">Select a conversation.</p>}
       </section>
     </div>
   );
@@ -346,30 +390,30 @@ async function MeetingsTab({ businessId }: { businessId: string }) {
     .returns<(Meeting & { prospects: Prospect | null })[]>();
 
   return (
-    <section className="card overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase text-muted">
-          <tr className="border-b border-line">
-            <th className="px-4 py-3">When</th>
-            <th className="px-4 py-3">With</th>
-            <th className="px-4 py-3">Status</th>
+    <section aria-label="Meetings" className="panel overflow-x-auto">
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">With</th>
+            <th scope="col">Status</th>
           </tr>
         </thead>
         <tbody>
           {(meetings ?? []).map((m) => (
-            <tr key={m.id} className="border-b border-line last:border-0">
-              <td className="px-4 py-3">{new Date(m.starts_at).toLocaleString()}</td>
-              <td className="px-4 py-3">
-                <p className="font-medium">{m.prospects ? personName(m.prospects) : "—"}</p>
-                <p className="text-muted">{m.prospects?.title} · {m.prospects?.company}</p>
+            <tr key={m.id}>
+              <td className="whitespace-nowrap">
+                <time dateTime={m.starts_at}>{dateTime.format(new Date(m.starts_at))}</time>
               </td>
-              <td className="px-4 py-3"><StatusPill status={m.status} /></td>
+              <td>
+                <p className="font-semibold">{m.prospects ? personName(m.prospects) : "–"}</p>
+                <p className="text-muted">{[m.prospects?.title, m.prospects?.company].filter(Boolean).join(", ")}</p>
+              </td>
+              <td><StatusPill status={m.status} /></td>
             </tr>
           ))}
           {!meetings?.length && (
-            <tr>
-              <td colSpan={3} className="px-4 py-8 text-center text-muted">No meetings booked yet.</td>
-            </tr>
+            <EmptyRow colSpan={3}>No meetings yet. When a prospect accepts a time, the call lands here and in your inbox.</EmptyRow>
           )}
         </tbody>
       </table>

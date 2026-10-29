@@ -1,73 +1,164 @@
 @import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/public-sans";
 
 :root {
-  --bg: #f5f4f1;
+  color-scheme: light;
+  --paper: #f6f7f9;
   --surface: #ffffff;
-  --surface-2: #f0efeb;
-  --fg: #171717;
-  --muted: #6b6b6b;
-  --line: #e4e2dd;
-  --accent: #12a36b;
-  --accent-fg: #ffffff;
-  --accent-soft: #e3f5ec;
-  --warn: #b7791f;
-  --danger: #c53030;
+  --surface-2: #eef1f5;
+  --ink: #141a2e;
+  --muted: #586178;
+  --line: #dce1e9;
+  --night: #1b2550;
+  --night-2: #263266;
+  --night-ink: #e8ecf8;
+  --night-muted: #aeb7da;
+  --dawn: #f2a93b;
+  --dawn-soft: #fdf1dc;
+  --dawn-ink: #7a4f08;
+  --success: #1f7a55;
+  --success-soft: #e3f3ec;
+  --danger: #b42318;
+  --focus: #3355ff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f0f0e;
-    --surface: #181817;
-    --surface-2: #222220;
-    --fg: #ededeb;
-    --muted: #9a9a96;
-    --line: #2c2c2a;
-    --accent: #2bc184;
-    --accent-fg: #06130d;
-    --accent-soft: #11291e;
-    --warn: #e0a84a;
-    --danger: #f07070;
+    color-scheme: dark;
+    --paper: #0e1222;
+    --surface: #151a2e;
+    --surface-2: #1d2340;
+    --ink: #e8ecf5;
+    --muted: #9aa3bc;
+    --line: #2a3150;
+    --night: #0a0e1c;
+    --night-2: #161c36;
+    --night-ink: #e8ecf8;
+    --night-muted: #9aa3c8;
+    --dawn: #f2b24d;
+    --dawn-soft: #2e2512;
+    --dawn-ink: #f6c878;
+    --success: #4cc38a;
+    --success-soft: #12291f;
+    --danger: #f07a6a;
+    --focus: #8ea2ff;
   }
 }
 
 @theme inline {
-  --color-bg: var(--bg);
+  --color-paper: var(--paper);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
-  --color-fg: var(--fg);
+  --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --color-accent: var(--accent);
-  --color-accent-fg: var(--accent-fg);
-  --color-accent-soft: var(--accent-soft);
-  --color-warn: var(--warn);
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
+  --color-night-ink: var(--night-ink);
+  --color-night-muted: var(--night-muted);
+  --color-dawn: var(--dawn);
+  --color-dawn-soft: var(--dawn-soft);
+  --color-dawn-ink: var(--dawn-ink);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Public Sans Variable", ui-sans-serif, sans-serif;
+  --radius-panel: 20px;
+  --radius-control: 10px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+a, button, [role="button"], input, select, textarea, label {
+  touch-action: manipulation;
+}
+
+button:not(:disabled), [role="button"] {
+  cursor: pointer;
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-fg px-4 py-2 text-sm font-medium text-bg transition hover:opacity-90 disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] bg-ink px-5 text-sm font-semibold text-paper transition-[opacity,transform] hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium transition hover:bg-surface-2 disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-control)] border border-line bg-surface px-5 text-sm font-semibold transition-[background-color,transform] hover:bg-surface-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
-  .card {
-    @apply rounded-2xl border border-line bg-surface;
+  .btn-quiet {
+    @apply inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-control)] px-3 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink;
+  }
+  .panel {
+    @apply rounded-[var(--radius-panel)] border border-line bg-surface;
   }
   .input {
-    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-fg;
+    @apply min-h-11 w-full rounded-[var(--radius-control)] border border-line bg-surface px-3 text-base text-ink placeholder:text-muted/80 transition-[border-color,box-shadow] focus:border-ink focus:outline-none focus:ring-3 focus:ring-[color-mix(in_srgb,var(--focus)_35%,transparent)];
   }
   .label {
-    @apply mb-1 block text-sm font-medium;
+    @apply mb-1.5 block text-sm font-medium;
+  }
+  .hint {
+    @apply mt-1.5 text-sm text-muted;
   }
   .pill {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .data-table {
+    @apply w-full text-sm tabular-nums;
+  }
+  .data-table th {
+    @apply border-b border-line px-4 py-3 text-left text-xs font-medium text-muted;
+  }
+  .data-table td {
+    @apply border-b border-line px-4 py-3 align-top;
+  }
+  .data-table tr:last-child td {
+    @apply border-b-0;
+  }
+}
+
+@keyframes log-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.log-entry {
+  animation: log-in 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .log-entry {
+    animation: none;
   }
 }

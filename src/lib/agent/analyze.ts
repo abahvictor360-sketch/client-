@@ -76,7 +76,10 @@ export async function analyzeBusiness(businessId: string) {
       })
       .eq("id", businessId);
 
-    await db.from("segments").delete().eq("business_id", businessId);
+    // Replace untouched segments; keep (paused) any that already emailed people,
+    // so their prospects, conversations and stats survive a re-analysis.
+    await db.from("segments").delete().eq("business_id", businessId).eq("sent", 0);
+    await db.from("segments").update({ status: "paused" }).eq("business_id", businessId);
     await db.from("segments").insert(
       analysis.segments
         .sort((a, b) => b.fit_score - a.fit_score)

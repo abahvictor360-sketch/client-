@@ -1,5 +1,6 @@
 "use client";
 
+import { Pause, Play, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { reanalyzeBusiness, setBusinessRunning } from "../../actions";
@@ -19,20 +20,25 @@ export function RunControls({ id, status }: { id: string; status: string }) {
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
   const running = status === "running";
+  const analyzing = status === "analyzing";
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex gap-2">
+    <div className="flex flex-col items-start gap-2 sm:items-end">
+      <div className="flex flex-wrap gap-2">
         <button
           className="btn-secondary"
-          disabled={pending || status === "analyzing"}
-          onClick={() => startTransition(() => reanalyzeBusiness(id))}
+          disabled={pending || analyzing}
+          onClick={() => {
+            if (!confirm("Analyze the website again? Buyer types that haven't sent any emails will be replaced.")) return;
+            startTransition(() => reanalyzeBusiness(id));
+          }}
         >
-          Re-analyze
+          <RefreshCw size={16} aria-hidden="true" />
+          Analyze again
         </button>
         <button
           className={running ? "btn-secondary" : "btn-primary"}
-          disabled={pending || status === "analyzing"}
+          disabled={pending || analyzing}
           onClick={() =>
             startTransition(async () => {
               const result = await setBusinessRunning(id, !running);
@@ -40,10 +46,17 @@ export function RunControls({ id, status }: { id: string; status: string }) {
             })
           }
         >
-          {running ? "Pause agent" : "Start agent"}
+          {running ? <Pause size={16} aria-hidden="true" /> : <Play size={16} aria-hidden="true" />}
+          {pending ? (running ? "Pausing…" : "Starting…") : running ? "Pause agent" : "Start agent"}
         </button>
       </div>
-      {error && <p className="max-w-xs text-right text-sm text-danger">{error}</p>}
+      {error && (
+        <p role="alert" className="max-w-sm text-sm text-danger sm:text-right">
+          {error}{" "}
+          {error.includes("Settings") && <a href="/app/settings" className="font-semibold underline">Open Settings</a>}
+          {error.includes("credits") && <a href="/app/billing" className="font-semibold underline">Add credits</a>}
+        </p>
+      )}
     </div>
   );
 }

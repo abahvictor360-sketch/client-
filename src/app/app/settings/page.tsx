@@ -13,7 +13,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-medium tracking-tight">Settings</h1>
+      <div><h1 className="text-3xl sm:text-4xl">Settings</h1><p className="mt-2 text-muted">Fill these in before starting your first campaign.</p></div>
       <AccountForm account={account} />
     </div>
   );

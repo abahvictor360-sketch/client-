@@ -15,36 +15,39 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
     .select("*")
     .order("created_at", { ascending: false })
     .returns<Business[]>();
+  const hasCampaigns = (businesses?.length ?? 0) > 0;
 
   return (
-    <div className="space-y-10">
-      <section className="mx-auto max-w-2xl text-center">
-        <h1 className="text-3xl font-medium tracking-tight">What are you selling?</h1>
+    <div className="space-y-12">
+      <section className="max-w-2xl">
+        <h1 className="text-3xl sm:text-4xl">{hasCampaigns ? "Campaigns" : "What are you selling?"}</h1>
         <p className="mt-2 text-muted">
-          Paste a website. The agent learns the offer, researches competitors and proposes who to sell to.
+          Paste a website. The agent reads it, studies the competition and proposes who to sell to.
         </p>
-        <div className="mt-6 text-left">
+        <div className="mt-6">
           <NewCampaignForm website={website} />
         </div>
       </section>
 
-      {businesses && businesses.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-lg font-medium">Your campaigns</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {businesses.map((b) => (
-              <Link key={b.id} href={`/app/b/${b.id}`} className="card block p-5 transition hover:border-fg">
-                <div className="flex items-start justify-between gap-3">
+      {hasCampaigns && (
+        <section aria-labelledby="campaigns-title">
+          <h2 id="campaigns-title" className="sr-only">Your campaigns</h2>
+          <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius-panel)] border border-line bg-surface">
+            {businesses!.map((b) => (
+              <li key={b.id}>
+                <Link
+                  href={`/app/b/${b.id}`}
+                  className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-surface-2"
+                >
                   <div className="min-w-0">
-                    <p className="truncate font-medium">{b.name ?? new URL(b.website).hostname}</p>
-                    <p className="truncate text-sm text-muted">{new URL(b.website).hostname}</p>
+                    <p className="truncate font-semibold">{b.name ?? new URL(b.website).hostname}</p>
+                    <p className="truncate text-sm text-muted">{b.summary ?? new URL(b.website).hostname}</p>
                   </div>
                   <StatusPill status={b.status} />
-                </div>
-                {b.summary && <p className="mt-3 line-clamp-2 text-sm text-muted">{b.summary}</p>}
-              </Link>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       )}
     </div>

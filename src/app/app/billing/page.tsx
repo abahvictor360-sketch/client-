@@ -7,11 +7,11 @@ export const metadata = { title: "Billing" };
 
 const REASONS: Record<string, string> = {
   signup_bonus: "Free signup credits",
-  top_up: "Top-up",
+  top_up: "Credits added",
   email: "Email sent",
-  ai_reply: "AI reply sent",
-  refund_failed_email: "Refund: email not sent",
-  refund_failed_reply: "Refund: reply not sent",
+  ai_reply: "Reply sent",
+  refund_failed_email: "Refund for an email that didn't send",
+  refund_failed_reply: "Refund for a reply that didn't send",
 };
 
 export default async function BillingPage({ searchParams }: { searchParams: Promise<{ paid?: string }> }) {
@@ -24,54 +24,69 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     .select("id, amount_cents, reason, created_at")
     .order("created_at", { ascending: false })
     .limit(100);
+  const balance = account?.credits_cents ?? 0;
   const billingEnabled = stripeClient() !== null;
+  const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-medium tracking-tight">Billing</h1>
-      {paid && <p className="rounded-lg bg-accent-soft px-4 py-3 text-sm">Payment received. Credits appear within a few seconds.</p>}
+    <div className="mx-auto max-w-3xl space-y-8">
+      <div>
+        <h1 className="text-3xl sm:text-4xl">Billing</h1>
+        <p className="mt-2 text-muted">{formatUsd(PRICE_PER_EMAIL_CENTS)} per email or reply sent. Nothing else is charged.</p>
+      </div>
+      {paid && (
+        <p role="status" className="rounded-[var(--radius-control)] bg-success-soft px-4 py-3 text-sm text-success">
+          Payment received. Your credits will appear in a few seconds.
+        </p>
+      )}
 
-      <section className="card p-6">
+      <section className="panel p-6 sm:p-8">
         <p className="text-sm text-muted">Balance</p>
-        <p className="mt-1 text-4xl font-medium">{formatUsd(account?.credits_cents ?? 0)}</p>
+        <p className="mt-1 font-display text-5xl font-semibold tabular-nums">{formatUsd(balance)}</p>
         <p className="mt-1 text-sm text-muted">
-          ≈ {Math.floor((account?.credits_cents ?? 0) / PRICE_PER_EMAIL_CENTS)} emails at {formatUsd(PRICE_PER_EMAIL_CENTS)} each
+          Enough for about {Math.floor(balance / PRICE_PER_EMAIL_CENTS).toLocaleString("en-US")} emails
         </p>
         {billingEnabled ? (
           <div className="mt-6 flex flex-wrap gap-2">
             {TOP_UP_OPTIONS_CENTS.map((amount) => (
               <form key={amount} action="/api/billing/checkout" method="post">
                 <input type="hidden" name="amount_cents" value={amount} />
-                <button className="btn-secondary">Add {formatUsd(amount)}</button>
+                <button className="btn-secondary tabular-nums">Add {formatUsd(amount)}</button>
               </form>
             ))}
           </div>
         ) : (
-          <p className="mt-6 text-sm text-muted">Top-ups are disabled until STRIPE_SECRET_KEY is configured.</p>
+          <p className="mt-6 text-sm text-muted">
+            Top-ups turn on once STRIPE_SECRET_KEY is set for this deployment.
+          </p>
         )}
       </section>
 
-      <section className="card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase text-muted">
-            <tr className="border-b border-line">
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3 text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(ledger ?? []).map((row) => (
-              <tr key={row.id} className="border-b border-line last:border-0">
-                <td className="px-4 py-3 text-muted">{new Date(row.created_at).toLocaleString()}</td>
-                <td className="px-4 py-3">{REASONS[row.reason] ?? row.reason}</td>
-                <td className={`px-4 py-3 text-right ${row.amount_cents > 0 ? "text-accent" : ""}`}>
-                  {row.amount_cents > 0 ? "+" : "−"}{formatUsd(Math.abs(row.amount_cents))}
-                </td>
+      <section aria-labelledby="history-title">
+        <h2 id="history-title" className="text-xl">History</h2>
+        <div className="panel mt-3 overflow-x-auto">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col" className="!text-right">Amount</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(ledger ?? []).map((row) => (
+                <tr key={row.id}>
+                  <td className="whitespace-nowrap text-muted">{date.format(new Date(row.created_at))}</td>
+                  <td>{REASONS[row.reason] ?? row.reason}</td>
+                  <td className={`text-right ${row.amount_cents > 0 ? "text-success" : ""}`}>
+                    {row.amount_cents > 0 ? "+" : "−"}
+                    {formatUsd(Math.abs(row.amount_cents))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

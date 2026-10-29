@@ -1,36 +1,37 @@
+import { Inbox, PauseCircle, ShieldCheck, Wallet } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { WebsiteForm } from "@/components/website-form";
 import { formatUsd, PRICE_PER_EMAIL_CENTS, SIGNUP_CREDITS_CENTS } from "@/lib/pricing";
+import { OvernightLog } from "./overnight-log";
+import { PricingEstimator } from "./pricing-estimator";
 
-const steps = [
+const steps: { title: string; body: string; artifact: React.ReactNode }[] = [
   {
-    title: "Learns what you sell",
-    body: "Reads your website and researches your competitors to understand your offer and where you win.",
-    demo: (
-      <div className="space-y-2 text-sm">
-        <p className="font-medium">larksilk.com</p>
-        <p className="text-muted">Wholesale silk flowers and greenery for hotels, restaurants and florists.</p>
-        <div className="border-t border-line pt-2 text-muted">Studying competitors…</div>
-        <p>✓ afloral.com</p>
-        <p className="text-muted">✓ nearlynatural.com</p>
+    title: "It learns what you sell",
+    body: "Reads your site, then looks up the competitors buyers compare you with, so every email leads with where you actually win.",
+    artifact: (
+      <div className="text-sm">
+        <p className="font-medium">Larksilk</p>
+        <p className="text-muted">Wholesale silk flowers for hotels, restaurants and florists. 45 years in business.</p>
+        <p className="mt-3 text-muted">Compared against afloral.com and nearlynatural.com</p>
       </div>
     ),
   },
   {
-    title: "Figures out who buys it",
-    body: "Proposes buyer segments with a fit score and the exact filters to find them.",
-    demo: (
-      <table className="w-full text-sm">
+    title: "It works out who buys it",
+    body: "Proposes buyer types with a fit score and the filters to find them. You can pause any you don't want.",
+    artifact: (
+      <table className="data-table">
         <tbody>
           {[
             ["Event designers", "92%"],
             ["Wedding floral studios", "88%"],
             ["Wedding planners", "85%"],
-            ["Country clubs", "79%"],
           ].map(([name, fit]) => (
-            <tr key={name} className="border-b border-line last:border-0">
-              <td className="py-2">{name}</td>
-              <td className="py-2 text-right text-muted">{fit}</td>
+            <tr key={name}>
+              <td className="!px-0">{name}</td>
+              <td className="!px-0 text-right text-muted">{fit} fit</td>
             </tr>
           ))}
         </tbody>
@@ -38,62 +39,67 @@ const steps = [
     ),
   },
   {
-    title: "Finds those exact people",
-    body: "Pulls decision makers with verified work emails from a B2B database of hundreds of millions of contacts.",
-    demo: (
-      <div className="grid gap-2 text-sm sm:grid-cols-2">
+    title: "It finds the decision makers",
+    body: "Pulls owners and buyers at those companies from a B2B database and keeps only verified work emails.",
+    artifact: (
+      <ul className="space-y-2 text-sm">
         {[
-          ["Owner", "Sweet Pea Events"],
-          ["Lead Designer", "Tupelo Honey"],
-        ].map(([role, company]) => (
-          <div key={company} className="rounded-xl bg-surface-2 p-3">
-            <p className="font-medium">{role}</p>
-            <p className="text-muted">{company}</p>
-          </div>
+          ["Rachel Whitfield", "Owner, Sweet Pea Events"],
+          ["Dana Okafor", "Lead designer, Tupelo Honey"],
+        ].map(([name, role]) => (
+          <li key={name} className="flex items-center gap-3">
+            <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-2 text-xs font-semibold">
+              {name.split(" ").map((p) => p[0]).join("")}
+            </span>
+            <span className="min-w-0">
+              <span className="block font-medium">{name}</span>
+              <span className="block truncate text-muted">{role}</span>
+            </span>
+          </li>
         ))}
-      </div>
+      </ul>
     ),
   },
   {
-    title: "Writes each a personal email",
-    body: "Researches every prospect's business and opens with something specific and true about them.",
-    demo: (
+    title: "It writes each one a personal email",
+    body: "Researches every company first and opens with something specific and true. No templates, no links, under 90 words.",
+    artifact: (
       <div className="text-sm">
-        <p>
-          <span className="text-muted">Subject</span> Larksilk x Tupelo Honey
-        </p>
+        <p className="font-medium">Larksilk x Tupelo Honey Flower</p>
         <p className="mt-2 text-muted">
-          Saw Tupelo Honey designs full-scale event installs. Fresh florals get expensive fast and wilt under venue
+          Saw you design full-scale event installs. At that pace fresh florals get expensive fast and wilt under venue
           lights…
         </p>
       </div>
     ),
   },
   {
-    title: "Handles replies and books meetings",
-    body: "Answers questions, offers times from your calendar hours and sends the invite.",
-    demo: (
+    title: "It answers replies and books the call",
+    body: "Handles questions, offers times inside your working hours and sends the calendar invite. Unsubscribes are honored instantly.",
+    artifact: (
       <div className="space-y-2 text-sm">
-        <p className="w-fit rounded-xl bg-surface-2 px-3 py-2">Interesting, can you do Tuesday 2pm?</p>
-        <p className="ml-auto w-fit rounded-xl bg-accent-soft px-3 py-2">Tuesday 2pm works, sending the invite now.</p>
+        <p className="w-fit max-w-[85%] rounded-2xl rounded-bl-sm bg-surface-2 px-3 py-2">Can you do Tuesday 2pm?</p>
+        <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-dawn-soft px-3 py-2">
+          Tuesday 2pm works. I&apos;ve sent the invite.
+        </p>
       </div>
     ),
   },
   {
-    title: "Learns what works and doubles down",
-    body: "Tracks replies and cost per lead by segment, scales the winners and pauses the rest.",
-    demo: (
-      <table className="w-full text-sm">
+    title: "It shifts budget to what works",
+    body: "Tracks cost per warm lead for each buyer type, sends more to the winners and pauses the rest.",
+    artifact: (
+      <table className="data-table">
         <tbody>
           {[
             ["Event designers", "Scaling", "$1.69"],
             ["Wedding planners", "Working", "$2.08"],
-            ["Houses of worship", "Paused", "—"],
+            ["Houses of worship", "Paused", "–"],
           ].map(([name, status, cost]) => (
-            <tr key={name} className="border-b border-line last:border-0">
-              <td className="py-2">{name}</td>
-              <td className="py-2 text-muted">{status}</td>
-              <td className="py-2 text-right">{cost}</td>
+            <tr key={name}>
+              <td className="!px-0">{name}</td>
+              <td className="text-muted">{status}</td>
+              <td className="!px-0 text-right">{cost}</td>
             </tr>
           ))}
         </tbody>
@@ -102,82 +108,113 @@ const steps = [
   },
 ];
 
+const controls = [
+  { icon: Wallet, title: "A daily budget you set", body: "It stops for the day when it hits your cap or your credits run out." },
+  { icon: PauseCircle, title: "Pause anything", body: "Stop the whole agent or one buyer type with a single click." },
+  { icon: Inbox, title: "Every conversation visible", body: "Read each email it sent and every reply it handled, in one inbox." },
+  { icon: ShieldCheck, title: "Compliance built in", body: "Your postal address, one-click unsubscribe and a do-not-contact list on every send." },
+];
+
 export default function Home() {
   return (
-    <div className="min-h-screen">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5">
+    <div className="min-h-dvh">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2">
+        Skip to content
+      </a>
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <Logo />
-        <nav className="flex items-center gap-5 text-sm">
-          <a href="#pricing" className="hidden sm:inline">
-            Pricing
-          </a>
-          <Link href="/login">Sign in</Link>
+        <nav aria-label="Main" className="flex items-center gap-1 text-sm">
+          <a href="#how" className="btn-quiet hidden sm:inline-flex">How it works</a>
+          <a href="#pricing" className="btn-quiet hidden sm:inline-flex">Pricing</a>
+          <Link href="/login" className="btn-quiet">Sign in</Link>
         </nav>
       </header>
 
-      <main>
-        <section className="mx-auto max-w-3xl px-4 pb-24 pt-16 text-center sm:pt-24">
-          <p className="pill mx-auto border border-line bg-surface">
-            {formatUsd(SIGNUP_CREDITS_CENTS)} in free credits
-          </p>
-          <h1 className="mt-6 text-4xl font-medium leading-tight tracking-tight sm:text-6xl">
-            An AI agent that books <span className="text-accent">sales meetings</span> while you sleep
-          </h1>
-          <p className="mx-auto mt-5 max-w-xl text-lg text-muted">
-            Paste your website. It finds your buyers, emails each one personally, handles the replies and puts
-            meetings on your calendar.
-          </p>
-          <form action="/signup" className="mx-auto mt-10 flex max-w-xl gap-2 rounded-2xl border-2 border-fg bg-surface p-2">
-            <input
-              name="website"
-              required
-              placeholder="Paste your website, e.g. acme.com"
-              className="min-w-0 flex-1 bg-transparent px-3 text-base outline-none"
-            />
-            <button className="btn-primary" aria-label="Start">
-              Start →
-            </button>
-          </form>
+      <main id="main">
+        <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-10 lg:grid-cols-[1.05fr_1fr] lg:pt-16">
+          <div>
+            <h1 className="text-[2.75rem] sm:text-6xl">Wake up to booked sales meetings</h1>
+            <p className="mt-5 max-w-xl text-lg text-muted">
+              Paste your website. Overnight, the agent works out who buys from you, emails each of them personally,
+              answers the replies and puts the calls on your calendar.
+            </p>
+            <div className="mt-8">
+              <WebsiteForm id="hero-website" />
+              <p className="hint">Includes {formatUsd(SIGNUP_CREDITS_CENTS)} of free credits. No card needed.</p>
+            </div>
+          </div>
+          <OvernightLog />
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 pb-24">
-          <h2 className="text-center text-3xl font-medium tracking-tight sm:text-4xl">We run the entire pipeline</h2>
-          <div className="mt-12 grid gap-4">
-            {steps.map((step, i) => (
-              <div key={step.title} className="card grid gap-6 p-6 sm:grid-cols-2 sm:p-10">
-                <div>
-                  <p className="text-sm text-muted">Step {i + 1}</p>
-                  <h3 className="mt-1 text-2xl font-medium tracking-tight sm:text-3xl">{step.title}</h3>
-                  <p className="mt-3 text-muted">{step.body}</p>
-                </div>
-                <div className="rounded-xl border border-line p-4">{step.demo}</div>
-              </div>
-            ))}
+        <section id="how" aria-labelledby="how-title" className="border-t border-line bg-surface py-20">
+          <div className="mx-auto max-w-6xl px-4">
+            <h2 id="how-title" className="max-w-2xl text-4xl sm:text-5xl">What happens after you paste your website</h2>
+            <ol className="mt-14 space-y-12">
+              {steps.map((step, i) => (
+                <li key={step.title} className="grid gap-6 md:grid-cols-[3rem_1fr_1fr] md:gap-10">
+                  <span
+                    aria-hidden="true"
+                    className="grid h-12 w-12 place-items-center rounded-full border border-line font-display text-lg font-semibold tabular-nums"
+                  >
+                    {i + 1}
+                  </span>
+                  <div>
+                    <h3 className="text-2xl sm:text-3xl">{step.title}</h3>
+                    <p className="mt-3 max-w-md text-muted">{step.body}</p>
+                  </div>
+                  <div className="rounded-[var(--radius-panel)] bg-paper p-5">{step.artifact}</div>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
-        <section id="pricing" className="mx-auto max-w-3xl px-4 pb-24 text-center">
-          <h2 className="text-3xl font-medium tracking-tight sm:text-4xl">Pay only for what the agent sends</h2>
-          <div className="card mt-10 p-8">
-            <p className="text-5xl font-medium">{formatUsd(PRICE_PER_EMAIL_CENTS)}</p>
-            <p className="mt-1 text-muted">per email, including research, writing, follow-ups and AI replies</p>
-            <ul className="mx-auto mt-6 max-w-sm space-y-2 text-left text-sm">
-              <li>✓ No subscription — set a daily budget and stop anytime</li>
-              <li>✓ {formatUsd(SIGNUP_CREDITS_CENTS)} in free credits to start</li>
-              <li>✓ Unsubscribe handling and compliance footer built in</li>
-            </ul>
-            <Link href="/signup" className="btn-primary mt-8">
-              Get started free
-            </Link>
+        <section aria-labelledby="control-title" className="mx-auto max-w-6xl px-4 py-20">
+          <h2 id="control-title" className="max-w-2xl text-4xl sm:text-5xl">It runs on its own. You stay in charge.</h2>
+          <ul className="mt-12 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+            {controls.map(({ icon: Icon, title, body }) => (
+              <li key={title} className="flex gap-4">
+                <Icon size={24} aria-hidden="true" className="mt-0.5 shrink-0 text-ink" />
+                <div>
+                  <h3 className="font-sans text-lg font-semibold tracking-normal">{title}</h3>
+                  <p className="mt-1 text-muted">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section id="pricing" aria-labelledby="pricing-title" className="border-t border-line bg-surface py-20">
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-2 lg:items-center">
+            <div>
+              <h2 id="pricing-title" className="text-4xl sm:text-5xl">
+                {formatUsd(PRICE_PER_EMAIL_CENTS)} per email. Nothing else.
+              </h2>
+              <p className="mt-4 max-w-md text-lg text-muted">
+                Research, writing, follow-ups and AI replies are included. No subscription, no seats, and your first{" "}
+                {formatUsd(SIGNUP_CREDITS_CENTS)} is on us.
+              </p>
+            </div>
+            <PricingEstimator pricePerEmailCents={PRICE_PER_EMAIL_CENTS} />
+          </div>
+        </section>
+
+        <section aria-labelledby="cta-title" className="bg-night py-20 text-night-ink">
+          <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 id="cta-title" className="text-4xl sm:text-5xl">Give it one night</h2>
+              <p className="mt-3 max-w-md text-night-muted">Review the buyer types it picks before you switch it on.</p>
+            </div>
+            <div className="w-full max-w-xl [&_.label]:text-night-ink [&_.btn-primary]:bg-dawn [&_.btn-primary]:text-[#141a2e]">
+              <WebsiteForm id="footer-website" buttonLabel="Start free" />
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-muted sm:flex-row sm:justify-between">
-          <Logo />
-          <p>© {new Date().getFullYear()}</p>
-        </div>
+      <footer className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+        <Logo />
+        <p>© {new Date().getFullYear()} Leadloop</p>
       </footer>
     </div>
   );
