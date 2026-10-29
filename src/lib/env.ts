@@ -19,7 +19,8 @@ export const env = {
   resendApiKey: () => required("RESEND_API_KEY"),
   resendWebhookSecret: () => required("RESEND_WEBHOOK_SECRET"),
   // Domain whose MX records point at Resend inbound; replies land here.
-  inboundDomain: () => required("INBOUND_EMAIL_DOMAIN"),
+  // Accepts "in.acme.com" or a full address like "hello@in.acme.com" (domain part is used).
+  inboundDomain: () => required("INBOUND_EMAIL_DOMAIN").trim().split("@").pop()!.toLowerCase(),
   cronSecret: () => required("CRON_SECRET"),
   // Signs unsubscribe links.
   linkSecret: () => required("LINK_SIGNING_SECRET"),
