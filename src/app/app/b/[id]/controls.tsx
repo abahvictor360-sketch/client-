@@ -30,7 +30,10 @@ export function RunControls({ id, status }: { id: string; status: string }) {
           disabled={pending || analyzing}
           onClick={() => {
             if (!confirm("Analyze the website again? Buyer types that haven't sent any emails will be replaced.")) return;
-            startTransition(() => reanalyzeBusiness(id));
+            startTransition(async () => {
+              const result = await reanalyzeBusiness(id);
+              setError(result?.error);
+            });
           }}
         >
           <RefreshCw size={16} aria-hidden="true" />

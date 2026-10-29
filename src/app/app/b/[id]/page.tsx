@@ -2,12 +2,12 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { StatusPill } from "@/components/status-pill";
-import { SubmitButton } from "@/components/submit-button";
 import { formatUsd } from "@/lib/pricing";
 import { requireUser } from "@/lib/supabase/server";
 import type { Business, Meeting, Message, Prospect, Segment } from "@/lib/types";
-import { setSegmentStatus, updateBusinessLimits } from "../../actions";
+import { setSegmentStatus } from "../../actions";
 import { AutoRefresh, RunControls } from "./controls";
+import { LimitsForm } from "./limits-form";
 
 export const maxDuration = 300;
 
@@ -235,20 +235,7 @@ export default async function BusinessPage({
             )}
             <section className="panel p-5 text-sm">
               <h2 className="text-lg">Spending limits</h2>
-              <form action={updateBusinessLimits.bind(null, id)} className="mt-4 space-y-4">
-                <div>
-                  <label className="label" htmlFor="daily_budget">Daily budget in USD</label>
-                  <input className="input tabular-nums" id="daily_budget" name="daily_budget" type="number" min={0} step="0.5"
-                    inputMode="decimal" autoComplete="off" defaultValue={business.daily_budget_cents / 100} />
-                </div>
-                <div>
-                  <label className="label" htmlFor="max_emails_per_day">Most emails per day</label>
-                  <input className="input tabular-nums" id="max_emails_per_day" name="max_emails_per_day" type="number" min={0} max={500}
-                    inputMode="numeric" autoComplete="off" defaultValue={business.max_emails_per_day} aria-describedby="max-hint" />
-                  <p id="max-hint" className="hint">New domains should start under 50 a day.</p>
-                </div>
-                <SubmitButton variant="secondary" pendingLabel="Saving…" className="w-full">Save limits</SubmitButton>
-              </form>
+              <LimitsForm id={id} dailyBudgetCents={business.daily_budget_cents} maxPerDay={business.max_emails_per_day} />
             </section>
           </aside>
         </div>

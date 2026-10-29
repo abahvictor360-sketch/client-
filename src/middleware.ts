@@ -23,15 +23,33 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && request.nextUrl.pathname.startsWith("/app")) {
+  const { pathname, searchParams } = request.nextUrl;
+  const protectedPage = pathname.startsWith("/app") || pathname === "/reset-password";
+  if (!user && protectedPage) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
-    login.searchParams.set("next", request.nextUrl.pathname);
+    login.search = "";
+    login.searchParams.set("next", pathname + request.nextUrl.search);
     return NextResponse.redirect(login);
+  }
+
+  // Signed-in visitors skip the auth forms. A website pasted on the landing
+  // page goes straight to the campaign form, which starts the analysis.
+  if (user && (pathname === "/login" || pathname === "/signup")) {
+    const target = request.nextUrl.clone();
+    target.search = "";
+    target.pathname = "/app";
+    const website = searchParams.get("website");
+    const about = searchParams.get("about");
+    if (website) target.searchParams.set("website", website);
+    else if (about) target.searchParams.set("about", about);
+    const next = searchParams.get("next");
+    if (next?.startsWith("/app")) return NextResponse.redirect(new URL(next, request.url));
+    return NextResponse.redirect(target);
   }
   return response;
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/login", "/signup"],
+  matcher: ["/app/:path*", "/login", "/signup", "/reset-password"],
 };

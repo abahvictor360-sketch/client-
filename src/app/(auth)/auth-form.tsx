@@ -12,12 +12,17 @@ export function AuthForm({
   website,
   about,
   next,
+  initialError,
+  notice,
 }: {
   mode: "login" | "signup";
   action: (state: State, form: FormData) => Promise<State>;
   website?: string;
   about?: string;
   next?: string;
+  /** Shown until the form is submitted, e.g. an expired email link. */
+  initialError?: string;
+  notice?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +50,14 @@ export function AuthForm({
         <input className="input" id="email" name="email" type="email" required autoComplete="email" spellCheck={false} />
       </div>
       <div>
-        <label className="label" htmlFor="password">Password</label>
+        <div className="flex items-baseline justify-between gap-3">
+          <label className="label" htmlFor="password">Password</label>
+          {!signup && (
+            <Link href="/forgot-password" className="text-sm text-muted underline-offset-4 hover:text-ink hover:underline">
+              Forgot password?
+            </Link>
+          )}
+        </div>
         <div className="relative">
           <input
             className="input pr-12"
@@ -69,7 +81,12 @@ export function AuthForm({
         </div>
         {signup && <p id="password-hint" className="hint">At least 8 characters.</p>}
       </div>
-      {state?.error && <p role="alert" className="text-sm text-danger">{state.error}</p>}
+      {(state?.error ?? (state ? undefined : initialError)) && (
+        <p role="alert" className="text-sm text-danger">{state?.error ?? initialError}</p>
+      )}
+      {!state && notice && (
+        <p role="status" className="rounded-[var(--radius-control)] bg-success-soft px-3 py-2 text-sm text-success">{notice}</p>
+      )}
       {state?.message && <p role="status" className="rounded-[var(--radius-control)] bg-success-soft px-3 py-2 text-sm text-success">{state.message}</p>}
       <button className="btn-primary w-full" disabled={pending}>
         {pending ? (signup ? "Creating account…" : "Signing in…") : signup ? "Create account" : "Sign in"}

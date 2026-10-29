@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { analyzeBusiness } from "@/lib/agent/analyze";
-import { missingSenderFields } from "@/lib/email";
+import { missingSenderFields, senderDomainProblem } from "@/lib/email";
 import { missingAnalysisConfig } from "@/lib/env";
 import { trialStatus } from "@/lib/pricing";
 import { requireUser } from "@/lib/supabase/server";
@@ -59,15 +59,17 @@ export async function createBusiness(_: unknown, form: FormData) {
   redirect(`/app/b/${data.id}`);
 }
 
-export async function reanalyzeBusiness(id: string) {
+export async function reanalyzeBusiness(id: string): Promise<{ error?: string }> {
   const { supabase } = await ownedBusiness(id);
-  if (configError()) return;
+  const notReady = configError();
+  if (notReady) return { error: notReady };
   await supabase
     .from("businesses")
     .update({ status: "analyzing", error: null, analysis_started_at: new Date().toISOString() })
     .eq("id", id);
   after(() => analyzeBusiness(id).catch((err) => console.error("Analysis failed", err)));
   revalidatePath(`/app/b/${id}`);
+  return {};
 }
 
 export async function setBusinessRunning(id: string, running: boolean) {
@@ -88,18 +90,23 @@ export async function setBusinessRunning(id: string, running: boolean) {
   return {};
 }
 
-export async function updateBusinessLimits(id: string, form: FormData) {
+export async function updateBusinessLimits(id: string, _: unknown, form: FormData) {
   const { supabase } = await ownedBusiness(id);
   const budget = Math.round(Number(form.get("daily_budget")) * 100);
   const maxPerDay = Math.round(Number(form.get("max_emails_per_day")));
-  if (!Number.isFinite(budget) || budget < 0 || !Number.isFinite(maxPerDay) || maxPerDay < 0 || maxPerDay > 500) {
-    return;
+  if (!Number.isFinite(budget) || budget < 0 || budget > 1_000_000) {
+    return { error: "Enter a daily budget between $0 and $10,000." };
   }
-  await supabase
+  if (!Number.isFinite(maxPerDay) || maxPerDay < 0 || maxPerDay > 500) {
+    return { error: "Emails per day must be between 0 and 500." };
+  }
+  const { error } = await supabase
     .from("businesses")
     .update({ daily_budget_cents: budget, max_emails_per_day: maxPerDay })
     .eq("id", id);
+  if (error) return { error: error.message };
   revalidatePath(`/app/b/${id}`);
+  return { message: "Limits saved" };
 }
 
 export async function setSegmentStatus(businessId: string, segmentId: string, status: "testing" | "paused") {
@@ -124,6 +131,12 @@ export async function updateAccount(_: unknown, form: FormData) {
   } catch {
     return { error: `Unknown timezone "${timezone}"` };
   }
+  const senderEmail = text("sender_email")?.toLowerCase() ?? null;
+  if (senderEmail) {
+    const problem = await senderDomainProblem(senderEmail);
+    if (problem) return { error: problem };
+  }
+
   const start = hours("working_hours_start", 9);
   const end = hours("working_hours_end", 17);
   if (start < 0 || end > 24 || end <= start + 1) return { error: "Working hours must span at least two hours." };
@@ -134,7 +147,7 @@ export async function updateAccount(_: unknown, form: FormData) {
       company_name: text("company_name"),
       sender_name: text("sender_name"),
       sender_title: text("sender_title"),
-      sender_email: text("sender_email")?.toLowerCase() ?? null,
+      sender_email: senderEmail,
       postal_address: text("postal_address"),
       timezone,
       working_hours_start: start,

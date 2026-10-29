@@ -33,6 +33,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
     .limit(100);
   const balance = account?.credits_cents ?? 0;
   const billingEnabled = stripeClient() !== null;
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
   const date = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" });
 
   return (
@@ -81,7 +82,18 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           </div>
         ) : (
           <p className="mt-6 text-sm text-muted">
-            Top-ups turn on once STRIPE_SECRET_KEY is set for this deployment.
+            Online card payments aren&apos;t available yet.{" "}
+            {supportEmail ? (
+              <>
+                To add credits, email{" "}
+                <a href={`mailto:${supportEmail}?subject=Add%20Leadloop%20credits`} className="font-semibold text-ink underline underline-offset-4">
+                  {supportEmail}
+                </a>{" "}
+                and we&apos;ll top up your account.
+              </>
+            ) : (
+              "Contact the team to add credits to your account."
+            )}
           </p>
         )}
       </section>
