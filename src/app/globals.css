@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f5f4f1;
+  --surface: #ffffff;
+  --surface-2: #f0efeb;
+  --fg: #171717;
+  --muted: #6b6b6b;
+  --line: #e4e2dd;
+  --accent: #12a36b;
+  --accent-fg: #ffffff;
+  --accent-soft: #e3f5ec;
+  --warn: #b7791f;
+  --danger: #c53030;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f0e;
+    --surface: #181817;
+    --surface-2: #222220;
+    --fg: #ededeb;
+    --muted: #9a9a96;
+    --line: #2c2c2a;
+    --accent: #2bc184;
+    --accent-fg: #06130d;
+    --accent-soft: #11291e;
+    --warn: #e0a84a;
+    --danger: #f07070;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-fg px-4 py-2 text-sm font-medium text-bg transition hover:opacity-90 disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-sm font-medium transition hover:bg-surface-2 disabled:opacity-50;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-surface;
+  }
+  .input {
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-fg;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
